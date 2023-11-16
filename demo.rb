@@ -40,6 +40,10 @@ post = Post.create(title: 'Example Post')
 post.comments.create(body: 'This is a comment')
 post.comments.create(body: 'This is another comment')
 
+(1..10).each do |i|
+  post.comments.create(body: "Comment #{i}")
+end
+
 # Querying Data
 begin
   post_id = post.id # Use the ID of the post you want to retrieve
