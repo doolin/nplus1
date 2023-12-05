@@ -2,11 +2,17 @@
 # frozen_string_literal: true
 
 require 'active_record'
+require 'logger'
 require 'sqlite3'
+
+# Something to note: ActiveRecord is typically used to
+# retrieve whole objects, not just attributes. This is
+# because it is an ORM (Object Relational Mapper).
+# This is not always efficient.
 
 # Database Setup
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-ActiveRecord::Base.logger = Logger.new(STDOUT)
+# ActiveRecord::Base.logger = Logger.new(STDOUT)
 # ActiveRecord::Base.logger.level = Logger::INFO  # Or another level, like Logger::WARN
 
 # Define Schema
@@ -44,12 +50,24 @@ post.comments.create(body: 'This is another comment')
   post.comments.create(body: "Comment #{i}")
 end
 
+
+ActiveRecord::Base.logger = Logger.new(STDOUT)
+
 # Querying Data
 begin
   post_id = post.id # Use the ID of the post you want to retrieve
 
-  # Efficiently retrieving a post and its comments
-  queried_post = Post.includes(:comments).find(post_id)
+  # This is 2 database calls.
+  # queried_post = Post.includes(:comments).find(post_id)
+
+  queried_post = Post.eager_load(:comments).find(post_id)
+
+
+  # binding.irb
+
+  # This doesn't work because the comments are not preloaded.
+  # queried_post = Post.find(post_id).includes(:comments)
+
 
   puts "Post: #{queried_post.title}"
   queried_post.comments.each do |comment|
