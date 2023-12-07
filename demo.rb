@@ -50,11 +50,11 @@ post.comments.create(body: 'This is another comment')
   post.comments.create(body: "Comment #{i}")
 end
 
+ActiveRecord::Base.logger = Logger.new($stdout)
 
-ActiveRecord::Base.logger = Logger.new(STDOUT)
+def with_includes
+  # Querying Data
 
-# Querying Data
-begin
   post_id = post.id # Use the ID of the post you want to retrieve
 
   # This is 2 database calls.
@@ -62,12 +62,10 @@ begin
 
   queried_post = Post.eager_load(:comments).find(post_id)
 
-
   # binding.irb
 
   # This doesn't work because the comments are not preloaded.
   # queried_post = Post.find(post_id).includes(:comments)
-
 
   puts "Post: #{queried_post.title}"
   queried_post.comments.each do |comment|
@@ -76,3 +74,25 @@ begin
 rescue ActiveRecord::RecordNotFound
   puts "Post with id #{post_id} not found."
 end
+
+def without_includes(post)
+  # Querying Data
+
+  post_id = post.id # Use the ID of the post you want to retrieve
+
+  queried_post = Post.find(post_id)
+
+  # binding.irb
+
+  # This doesn't work because the comments are not preloaded.
+  # queried_post = Post.find(post_id)
+
+  puts "Post: #{queried_post.title}"
+  queried_post.comments.each do |comment|
+    puts " - Comment: #{comment.body}"
+  end
+rescue ActiveRecord::RecordNotFound
+  puts "Post with id #{post_id} not found."
+end
+
+without_includes(post)
