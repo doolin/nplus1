@@ -27,6 +27,7 @@ ActiveRecord::Schema.define do
   end
 end
 
+# Make rubocop happy
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
 end
