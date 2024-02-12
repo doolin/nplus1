@@ -1,6 +1,13 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 
 gem 'activerecord'
-gem 'rubocop'
-gem 'rspec'
 gem 'bullet'
+gem 'rspec'
+gem 'rubocop'
+gem 'rubocop-performance'
+gem 'rubocop-rails'
+gem 'rubocop-rake'
+gem 'rubocop-rspec'
+gem 'rubocop-thread_safety'
