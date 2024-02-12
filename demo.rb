@@ -43,15 +43,43 @@ class Comment < ApplicationRecord
 end
 
 # Seeding Data
-post = Post.create(title: 'Example Post')
-post.comments.create(body: 'This is a comment')
-post.comments.create(body: 'This is another comment')
+def seed_one_post
+  post = Post.create(title: 'Example Post 1')
+  id = post.id
+  post.comments.create(body: 'This is a comment')
+  post.comments.create(body: 'This is another comment')
 
-(1..10).each do |i|
-  post.comments.create(body: "Comment #{i}")
+  (1..10).each do |i|
+    post.comments.create(body: "Comment #{i}")
+  end
+
+  id
 end
 
-ActiveRecord::Base.logger = Logger.new($stdout)
+def seed_two_posts
+  count = 1
+  post = Post.create(title: 'Example Post 1')
+  # id = post.id
+  # post.acomments.create(body: 'This is a comment')
+  # post.comments.create(body: 'This is another comment')
+  (0..count).each do |i|
+    post.comments.create(body: "Comment #{i}")
+  end
+
+  post = Post.create(title: 'Example Post 2')
+  (0..count).each do |i|
+    post.comments.create(body: "Comment #{i}")
+  end  
+end
+
+def seed(post_count:, comment_count:)
+  (1..post_count).each do |i|
+    post = Post.create(title: "Example Post #{i}")
+    (1..comment_count).each do |j|
+      post.comments.create(body: "Comment #{j}")
+    end
+  end
+end
 
 def with_includes
   # Querying Data
@@ -76,11 +104,7 @@ rescue ActiveRecord::RecordNotFound
   puts "Post with id #{post_id} not found."
 end
 
-def without_includes(post)
-  # Querying Data
-
-  post_id = post.id # Use the ID of the post you want to retrieve
-
+def without_includes(post_id)
   queried_post = Post.find(post_id)
 
   # binding.irb
@@ -96,4 +120,17 @@ rescue ActiveRecord::RecordNotFound
   puts "Post with id #{post_id} not found."
 end
 
-without_includes(post)
+# This does not do n+1
+# post_id = seed_one_post
+# without_includes(post_id)
+
+# post_id = seed_two_posts
+
+seed(post_count: 5, comment_count: 1)
+ActiveRecord::Base.logger = Logger.new($stdout)
+Post.all.each do |post|
+  post.comments.each do |comment|
+    puts comment.body
+  end
+end
+
