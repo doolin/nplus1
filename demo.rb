@@ -69,7 +69,7 @@ def seed_two_posts
   post = Post.create(title: 'Example Post 2')
   (0..count).each do |i|
     post.comments.create(body: "Comment #{i}")
-  end  
+  end
 end
 
 def seed(post_count:, comment_count:)
@@ -133,4 +133,3 @@ Post.all.each do |post|
     puts comment.body
   end
 end
-
