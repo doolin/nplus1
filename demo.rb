@@ -4,6 +4,7 @@
 require 'active_record'
 require 'logger'
 require 'sqlite3'
+require 'query_count'
 
 # Something to note: ActiveRecord is typically used to
 # retrieve whole objects, not just attributes. This is
@@ -126,10 +127,17 @@ end
 
 # post_id = seed_two_posts
 
-seed(post_count: 5, comment_count: 1)
+seed(post_count: 1000, comment_count: 1)
 ActiveRecord::Base.logger = Logger.new($stdout)
-Post.all.each do |post|
-  post.comments.each do |comment|
+# Post.all.each do |post|
+# QueryCount::Counter.reset_counter
+#
+# Run this ./demo > tmp/out.txt
+# Check with grep "SELECT" tmp/out.txt | wc -l
+Post.limit(1000).find_each do |post|
+    post.comments.each do |comment|
     puts comment.body
   end
+  # puts "Query count: #{QueryCount::Counter.counter}"
 end
+# puts "Query count: #{QueryCount::Counter.counter}"
