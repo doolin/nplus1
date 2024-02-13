@@ -36,6 +36,14 @@ end
 # Define post model
 class Post < ApplicationRecord
   has_many :comments
+
+  # Page 5, the `.last` executes the query,
+  # so it's not efficient. This doesn't matter
+  # whether there is ain `includes` to the left,
+  # it still produces n+1 queries.
+  def latest_comment
+    comments.order(:created_at).last
+  end
 end
 
 # Define comment model
@@ -127,17 +135,20 @@ end
 
 # post_id = seed_two_posts
 
-seed(post_count: 1000, comment_count: 1)
-ActiveRecord::Base.logger = Logger.new($stdout)
-# Post.all.each do |post|
-# QueryCount::Counter.reset_counter
-#
+
 # Run this ./demo > tmp/out.txt
 # Check with grep "SELECT" tmp/out.txt | wc -l
-Post.limit(1000).find_each do |post|
-    post.comments.each do |comment|
-    puts comment.body
-  end
-  # puts "Query count: #{QueryCount::Counter.counter}"
+# Post.limit(1000).find_each do |post|
+#     post.comments.each do |comment|
+#     puts comment.body
+#   end
+# end
+
+# Page 4.
+seed(post_count: 1, comment_count: 1)
+ActiveRecord::Base.logger = Logger.new($stdout)
+Post.includes(:comments).each do |post|
+  # But here rails will "ignore" your includes and run a query
+  # for each post (n+1 queries)
+  puts post.latest_comment
 end
-# puts "Query count: #{QueryCount::Counter.counter}"
