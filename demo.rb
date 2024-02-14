@@ -13,28 +13,6 @@ require_relative 'setup'
 # because it is an ORM (Object Relational Mapper).
 # This is not always efficient.
 
-# # Database Setup
-# ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-# # ActiveRecord::Base.logger = Logger.new(STDOUT)
-# # ActiveRecord::Base.logger.level = Logger::INFO  # Or another level, like Logger::WARN
-
-# # Define Schema
-# ActiveRecord::Schema.define do
-#   create_table :posts do |table|
-#     table.column :title, :string
-#   end
-
-#   create_table :comments do |table|
-#     table.column :post_id, :integer
-#     table.column :body, :string
-#   end
-# end
-
-# # Make rubocop happy
-# class ApplicationRecord < ActiveRecord::Base
-#   self.abstract_class = true
-# end
-
 # Define post model
 class Post < ApplicationRecord
   has_many :comments
@@ -137,7 +115,6 @@ end
 
 # post_id = seed_two_posts
 
-
 # Run this ./demo > tmp/out.txt
 # Check with grep "SELECT" tmp/out.txt | wc -l
 # Post.limit(1000).find_each do |post|
@@ -150,7 +127,7 @@ end
 seed(post_count: 1, comment_count: 1)
 ActiveRecord::Base.logger = Logger.new($stdout)
 # The `includes` is ignored here.
-Post.includes(:comments).each do |post|
+Post.includes(:comments).find_each do |post|
   # But here rails will "ignore" your includes and run a query
   # for each post (n+1 queries)
   puts post.latest_comment
