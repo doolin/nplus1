@@ -6,32 +6,34 @@ require 'logger'
 require 'sqlite3'
 require 'query_count'
 
+require_relative 'setup'
+
 # Something to note: ActiveRecord is typically used to
 # retrieve whole objects, not just attributes. This is
 # because it is an ORM (Object Relational Mapper).
 # This is not always efficient.
 
-# Database Setup
-ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-# ActiveRecord::Base.logger = Logger.new(STDOUT)
-# ActiveRecord::Base.logger.level = Logger::INFO  # Or another level, like Logger::WARN
+# # Database Setup
+# ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
+# # ActiveRecord::Base.logger = Logger.new(STDOUT)
+# # ActiveRecord::Base.logger.level = Logger::INFO  # Or another level, like Logger::WARN
 
-# Define Schema
-ActiveRecord::Schema.define do
-  create_table :posts do |table|
-    table.column :title, :string
-  end
+# # Define Schema
+# ActiveRecord::Schema.define do
+#   create_table :posts do |table|
+#     table.column :title, :string
+#   end
 
-  create_table :comments do |table|
-    table.column :post_id, :integer
-    table.column :body, :string
-  end
-end
+#   create_table :comments do |table|
+#     table.column :post_id, :integer
+#     table.column :body, :string
+#   end
+# end
 
-# Make rubocop happy
-class ApplicationRecord < ActiveRecord::Base
-  self.abstract_class = true
-end
+# # Make rubocop happy
+# class ApplicationRecord < ActiveRecord::Base
+#   self.abstract_class = true
+# end
 
 # Define post model
 class Post < ApplicationRecord
@@ -147,6 +149,7 @@ end
 # Page 4.
 seed(post_count: 1, comment_count: 1)
 ActiveRecord::Base.logger = Logger.new($stdout)
+# The `includes` is ignored here.
 Post.includes(:comments).each do |post|
   # But here rails will "ignore" your includes and run a query
   # for each post (n+1 queries)
