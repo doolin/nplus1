@@ -9,11 +9,15 @@ ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:'
 ActiveRecord::Schema.define do
   create_table :posts do |table|
     table.column :title, :string
+    table.datetime "created_at", null: false
+    table.datetime "updated_at", null: false
   end
 
   create_table :comments do |table|
     table.column :post_id, :integer
     table.column :body, :string
+    table.datetime "created_at", null: false
+    table.datetime "updated_at", null: false
   end
 end
 
