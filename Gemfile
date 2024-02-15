@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 
 gem 'activerecord'
 gem 'bullet'
+gem 'colorize'
 gem 'query_count'
 gem 'rspec'
 gem 'rubocop'

@@ -40,6 +40,7 @@ GEM
     bullet (7.1.6)
       activesupport (>= 3.0.0)
       uniform_notifier (~> 1.11)
+    colorize (1.1.0)
     concurrent-ruby (1.2.3)
     connection_pool (2.4.1)
     crass (1.0.6)
@@ -176,6 +177,7 @@ PLATFORMS
 DEPENDENCIES
   activerecord
   bullet
+  colorize
   query_count
   rspec
   rubocop

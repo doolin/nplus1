@@ -13,8 +13,16 @@ ActiveRecord::Schema.define do
     table.datetime 'updated_at', null: false
   end
 
+  create_table :users do |table|
+    table.column :first_name, :string
+    table.column :last_name, :string
+    table.datetime 'created_at', null: false
+    table.datetime 'updated_at', null: false
+  end
+
   create_table :comments do |table|
     table.column :post_id, :integer
+    table.column :user_id, :integer
     table.column :body, :string
     table.datetime 'created_at', null: false
     table.datetime 'updated_at', null: false
