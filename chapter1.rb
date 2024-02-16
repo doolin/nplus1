@@ -11,7 +11,9 @@ require_relative 'setup'
 
 # Define post model
 class User < ApplicationRecord
-  has_many :comments, strict_loading: true
+  self.strict_loading_by_default = true
+
+  has_many :comments
 end
 
 # Define comment model
@@ -33,6 +35,10 @@ banner = <<~BANNER
   raising an error when you try to load an association that was not
   preloaded. This feature is useful to ensure that you are not
   accidentally loading associations in a loop or in a view.
+
+  In this case, strict loading is being set on the model instead of
+  the association. This means that the error will be raised when you
+  try to load the association from any instance of the model.
 BANNER
 puts banner.yellow
 
