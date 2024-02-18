@@ -35,6 +35,8 @@ gemfile(true) do
 
   gem 'rails'
   gem 'rack'
+  gem 'rack-mini-profiler', require: false
+  gem 'stackprof'
   gem 'sqlite3'
   gem 'colorize'
   gem 'query_count'
@@ -45,6 +47,7 @@ require 'rails/all'
 require 'action_controller/railtie'
 require 'action_controller'
 require 'active_record'
+require 'rack-mini-profiler'
 require 'logger'
 
 Rails.logger = Logger.new($stdout)
@@ -101,8 +104,21 @@ puts banner.yellow
 
 # ActiveRecord::Base.logger = Logger.new($stdout)
 ActiveRecord::Base.logger = Logger.new('./log/development.log')
-# Apparently cannot configure in Application per Page 13.
-ActiveRecord::Base.strict_loading_by_default = true
+# Apparently cannot configure in class App per Page 13,
+# so we configure directly here.
+# ActiveRecord::Base.strict_loading_by_default = true
+
+Rack::MiniProfiler.config.storage = Rack::MiniProfiler::FileStore.new(path: './tmp/miniprofiler/profile')
+# From `rack-mini-profiler/lib/rack-mini-profiler.rb`
+require 'mini_profiler/version'
+require 'mini_profiler/asset_version'
+require 'mini_profiler'
+require 'patches/sql_patches'
+require 'patches/net_patches'
+if defined?(::Rails) && defined?(::Rails::VERSION) && ::Rails::VERSION::MAJOR.to_i >= 3
+  require 'mini_profiler_rails/railtie'
+end
+### The lines above ^^^ are from `rack-mini-profiler/lib/rack-mini-profiler.rb`
 
 # The actual Rails application.
 class App < Rails::Application
@@ -140,7 +156,7 @@ class WelcomeController < ActionController::Base
     begin
       user.comments.to_a
     rescue ActiveRecord::StrictLoadingViolationError => e
-      # Will induce a 304 response.
+      # Will induce a 304 response when strict loading is enforced.
       puts e.message.red
     end
   end
