@@ -70,26 +70,33 @@ puts banner.yellow
 # ActiveRecord::Base.logger = Logger.new($stdout)
 
 class App < Rails::Application
-  config.root = __dir__
+  # Not sure what these do,  comment out for now.
+  # config.root = __dir__
   config.consider_all_requests_local = true
+
   # config.logger           = ActiveSupport::Logger.new(STDOUT)
   # config.logger = Rails::Rack::Logger.new(Logger.new (STDOUT) )
   # config.logger           = ActiveSupport::Logger.new(STDOUT)
   # logger.formatter = config.log_formatter
-  config.colorize_logging
+  # config.colorize_logging
   config.secret_key_base = 'i_am_a_secret'
   # config.active_storage.service_configurations = { 'local' => { 'service' => 'Disk', 'root' => './storage' } }
 
-  routes.append do
-    get '/welcome' => 'welcome#index' # , via: %i[get]
-    root to: proc{|env| [200, {'Content-type' => 'text/html'}, ['Hello World']]}
-    # root to: 'welcome#index'
-  end
+  # TODO: try config.routes
+  # routes.append do
+  #   get '/welcome' => 'welcome#index' # , via: %i[get]
+  #   root to: proc{|env| [200, {'Content-type' => 'text/html'}, ['Hello World']]}
+  #   # root to: 'welcome#index'
+  # end
+end
+
+Rails.application.routes.draw do
+  get '/welcome' => 'welcome#index' # , via: %i[get]
+  # root to: proc{|env| [200, {'Content-type' => 'text/html'}, ['Hello World']]}
 end
 
 class WelcomeController < ActionController::Base
   def index
-    binding.irb
     render inline: 'Hi!'
   end
 end
