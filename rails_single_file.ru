@@ -3,7 +3,29 @@
 
 require 'bundler/inline'
 
-# From https://greg.molnar.io/blog/a-single-file-rails-application/
+# Links:
+# - https://greg.molnar.io/blog/a-single-file-rails-application/
+# - https://github.com/XiaoA/single-rackup-file-rails/blob/main/app.ru
+# - https://gist.github.com/v-kolesnikov/111144e4ca12850b06921c1d7bd18336
+# - https://gist.github.com/doolin/9d76786d3d144b13e8f272c71c832632
+# - https://gist.github.com/doolin/dd9a6047d5cd0784a508979539ae44b2
+# - https://github.com/sirfilip/single-file-rails/blob/master/app.rb
+# - https://github.com/hopsoft/sr_mini/blob/main/application.rb
+
+# Dealing with some errors:
+# You should run `bundle binstub rack` to work around a system/bundle conflict:
+#  - `gem uninstall bundler`
+#  - `gem install bundler`
+
+# gem-wrappers_plugin.rb": cannot load such file -- gem-wrappers
+
+# Had to reinstall ruby 3.3.0 and got the usual issue linking.
+# This worked: `rvm install 3.3.0 --autolibs=disable`
+# This flag should also work: --with-openssl-dir=/opt/homebrew/opt/openssl@1.1
+
+# Also did this: bundle update --bundler
+
+puts 'HERE'
 # Necessary for single file Rails application, not sure how I want
 # to handle this yet.
 gemfile(true) do
@@ -16,21 +38,18 @@ gemfile(true) do
   gem 'query_count'
   gem 'puma'
 end
+puts 'HERE'
 
 require 'rails/all'
 require 'action_controller/railtie'
+require 'action_controller'
 require 'logger'
 
 Rails.logger = Logger.new(STDOUT)
 
-# require 'logger'
-# require 'sqlite3'
-# require 'colorize'
-# require 'query_count'
-
 require_relative 'setup'
 
-# Define post model
+# Define user model
 class User < ApplicationRecord
   self.strict_loading_by_default = true
 
@@ -62,8 +81,9 @@ class App < Rails::Application
   # config.active_storage.service_configurations = { 'local' => { 'service' => 'Disk', 'root' => './storage' } }
 
   routes.append do
-    match '/' => 'welcome#index', via: %i[get]
-    root to: 'welcome#index'
+    get '/welcome' => 'welcome#index' # , via: %i[get]
+    root to: proc{|env| [200, {'Content-type' => 'text/html'}, ['Hello World']]}
+    # root to: 'welcome#index'
   end
 end
 
