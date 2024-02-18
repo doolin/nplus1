@@ -44,19 +44,47 @@ end
 require 'rails/all'
 require 'action_controller/railtie'
 require 'action_controller'
+require 'active_record'
 require 'logger'
 
 Rails.logger = Logger.new($stdout)
 
-# Ok so this is not _strictly_ a single file application,
-# but adding the setup.rb code for the schema would make
-# it so. Might add it incline later.
-require_relative 'setup'
+# It won't run in memory:
+# ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
+ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: 'ch1.db')
+# ActiveRecord::Base.logger = Logger.new(STDOUT)
+# ActiveRecord::Base.logger.level = Logger::INFO  # Or another level, like Logger::WARN
+# Define Schema
+ActiveRecord::Schema.define do
+  create_table :posts do |table|
+    table.column :title, :string
+    table.datetime 'created_at', null: false
+    table.datetime 'updated_at', null: false
+  end
+
+  create_table :users do |table|
+    table.column :first_name, :string
+    table.column :last_name, :string
+    table.datetime 'created_at', null: false
+    table.datetime 'updated_at', null: false
+  end
+
+  create_table :comments do |table|
+    table.column :post_id, :integer
+    table.column :user_id, :integer
+    table.column :body, :string
+    table.datetime 'created_at', null: false
+    table.datetime 'updated_at', null: false
+  end
+end
+
+# Make rubocop happy
+class ApplicationRecord < ActiveRecord::Base
+  self.abstract_class = true
+end
 
 # Define user model
 class User < ApplicationRecord
-  self.strict_loading_by_default = true
-
   has_many :comments
 end
 
@@ -71,13 +99,18 @@ banner = <<~BANNER
 BANNER
 puts banner.yellow
 
-# ActiveRecord::Base.logger = Logger.new($stdout)
+ActiveRecord::Base.logger = Logger.new($stdout)
+# Apparently cannot configure in Application per Page 13.
+ActiveRecord::Base.strict_loading_by_default = true
 
 # The actual Rails application.
 class App < Rails::Application
   # Not sure what these do,  comment out for now.
   # config.root = __dir__
   config.consider_all_requests_local = true
+
+  # Page 13, this doens't work, see ActiveRecord::Base above.
+  # config.active_record.strict_loading_by_default = true
 
   # config.logger           = ActiveSupport::Logger.new(STDOUT)
   # config.logger = Rails::Rack::Logger.new(Logger.new (STDOUT) )
@@ -97,6 +130,25 @@ end
 class WelcomeController < ActionController::Base
   def index
     render inline: 'Hi!'
+
+    seed(user_count: 2, comment_count: 5)
+
+    user = User.first
+    begin
+      user.comments.to_a
+    rescue ActiveRecord::StrictLoadingViolationError => e
+      # Will induce a 304 response.
+      puts e.message.red
+    end
+  end
+
+  def seed(user_count:, comment_count:)
+    (1..user_count).each do |i|
+      user = User.create(first_name: "Name#{i}")
+      (1..comment_count).each do |j|
+        user.comments.create(body: "Comment #{j}")
+      end
+    end
   end
 end
 
