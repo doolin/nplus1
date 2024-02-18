@@ -99,7 +99,8 @@ banner = <<~BANNER
 BANNER
 puts banner.yellow
 
-ActiveRecord::Base.logger = Logger.new($stdout)
+# ActiveRecord::Base.logger = Logger.new($stdout)
+ActiveRecord::Base.logger = Logger.new('./log/development.log')
 # Apparently cannot configure in Application per Page 13.
 ActiveRecord::Base.strict_loading_by_default = true
 
@@ -109,8 +110,10 @@ class App < Rails::Application
   # config.root = __dir__
   config.consider_all_requests_local = true
 
-  # Page 13, this doens't work, see ActiveRecord::Base above.
+  # Page 13, this doesn't work, see ActiveRecord::Base above.
   # config.active_record.strict_loading_by_default = true
+  # Page 13, does not appear to work, it's not going to log.
+  config.active_record.action_on_strict_loading_violation = :log
 
   # config.logger           = ActiveSupport::Logger.new(STDOUT)
   # config.logger = Rails::Rack::Logger.new(Logger.new (STDOUT) )

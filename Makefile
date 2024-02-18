@@ -1,3 +1,3 @@
 
 clean:
-	rm -rf *.db*
+	rm -rf *.db* log/*
