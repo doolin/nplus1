@@ -2,9 +2,10 @@
 
 source 'https://rubygems.org'
 
-gem 'activerecord'
+gem 'rails'
 gem 'bullet'
 gem 'colorize'
+gem 'puma'
 gem 'query_count'
 gem 'rspec'
 gem 'rubocop'

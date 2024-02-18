@@ -1,6 +1,20 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'bundler/inline'
+
+# From https://greg.molnar.io/blog/a-single-file-rails-application/
+# Necessary for single file Rails application, not sure how I want
+# to handle this yet.
+gemfile(true) do
+  source 'https://rubygems.org'
+
+  gem 'rails'
+  gem 'sqlite3'
+  gem 'colorize'
+  gem 'query_count'
+end
+
 require 'active_record'
 require 'logger'
 require 'sqlite3'
