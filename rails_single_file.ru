@@ -3,7 +3,7 @@
 
 require 'bundler/inline'
 
-# Links:
+# Links for single page Rails application:
 # - https://greg.molnar.io/blog/a-single-file-rails-application/
 # - https://github.com/XiaoA/single-rackup-file-rails/blob/main/app.ru
 # - https://gist.github.com/v-kolesnikov/111144e4ca12850b06921c1d7bd18336
@@ -13,19 +13,21 @@ require 'bundler/inline'
 # - https://github.com/hopsoft/sr_mini/blob/main/application.rb
 
 # Dealing with some errors:
-# You should run `bundle binstub rack` to work around a system/bundle conflict:
+# This error "You should run `bundle binstub rack` to work around a system/bundle conflict"
+# was fixed by running:
 #  - `gem uninstall bundler`
 #  - `gem install bundler`
 
+# Not sure how I fixed this, but updating bundler, reinstalling
+# Ruby 3.3.0, and running `bundle pristibe` seemed to fix it.
 # gem-wrappers_plugin.rb": cannot load such file -- gem-wrappers
 
 # Had to reinstall ruby 3.3.0 and got the usual issue linking.
 # This worked: `rvm install 3.3.0 --autolibs=disable`
 # This flag should also work: --with-openssl-dir=/opt/homebrew/opt/openssl@1.1
 
-# Also did this: bundle update --bundler
+# Also did this: `bundle update --bundler` to fix a bundler issue.
 
-puts 'HERE'
 # Necessary for single file Rails application, not sure how I want
 # to handle this yet.
 gemfile(true) do
@@ -38,15 +40,17 @@ gemfile(true) do
   gem 'query_count'
   gem 'puma'
 end
-puts 'HERE'
 
 require 'rails/all'
 require 'action_controller/railtie'
 require 'action_controller'
 require 'logger'
 
-Rails.logger = Logger.new(STDOUT)
+Rails.logger = Logger.new($stdout)
 
+# Ok so this is not _strictly_ a single file application,
+# but adding the setup.rb code for the schema would make
+# it so. Might add it incline later.
 require_relative 'setup'
 
 # Define user model
@@ -69,6 +73,7 @@ puts banner.yellow
 
 # ActiveRecord::Base.logger = Logger.new($stdout)
 
+# The actual Rails application.
 class App < Rails::Application
   # Not sure what these do,  comment out for now.
   # config.root = __dir__
@@ -81,13 +86,6 @@ class App < Rails::Application
   # config.colorize_logging
   config.secret_key_base = 'i_am_a_secret'
   # config.active_storage.service_configurations = { 'local' => { 'service' => 'Disk', 'root' => './storage' } }
-
-  # TODO: try config.routes
-  # routes.append do
-  #   get '/welcome' => 'welcome#index' # , via: %i[get]
-  #   root to: proc{|env| [200, {'Content-type' => 'text/html'}, ['Hello World']]}
-  #   # root to: 'welcome#index'
-  # end
 end
 
 Rails.application.routes.draw do
@@ -95,6 +93,7 @@ Rails.application.routes.draw do
   # root to: proc{|env| [200, {'Content-type' => 'text/html'}, ['Hello World']]}
 end
 
+# Demo controller, will likely be removed.
 class WelcomeController < ActionController::Base
   def index
     render inline: 'Hi!'
