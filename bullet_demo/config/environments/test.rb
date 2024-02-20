@@ -61,11 +61,4 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
   config.action_controller.raise_on_missing_callback_actions = true
-
-  # https://github.com/flyerhzm/bullet/tree/main?tab=readme-ov-file#run-in-tests
-  config.after_initialize do
-    Bullet.enable = true
-    Bullet.bullet_logger = true
-    Bullet.raise = true # raise an error if n+1 query occurs
-  end
 end
