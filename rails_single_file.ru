@@ -38,7 +38,8 @@ gemfile(true) do
   gem 'rack-mini-profiler', require: false
   gem 'stackprof'
   gem 'sqlite3'
-  gem 'bullet'
+  gem 'prosopite'
+  gem 'pg_query'
   gem 'colorize'
   gem 'query_count'
   gem 'puma'
@@ -50,8 +51,11 @@ require 'action_controller'
 require 'active_record'
 require 'rack-mini-profiler'
 require 'logger'
+require 'colorize'
 
 Rails.logger = Logger.new($stdout)
+Prosopite.min_n_queries = 2
+Prosopite.prosopite_logger = true
 
 # It won't run in memory:
 # ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
@@ -130,7 +134,7 @@ class App < Rails::Application
   # Page 13, this doesn't work, see ActiveRecord::Base above.
   # config.active_record.strict_loading_by_default = true
   # Page 13, does not appear to work, it's not going to log.
-  config.active_record.action_on_strict_loading_violation = :log
+  # config.active_record.action_on_strict_loading_violation = :log
 
   # config.logger           = ActiveSupport::Logger.new(STDOUT)
   # config.logger = Rails::Rack::Logger.new(Logger.new (STDOUT) )
@@ -141,33 +145,8 @@ class App < Rails::Application
   # config.active_storage.service_configurations = { 'local' => { 'service' => 'Disk', 'root' => './storage' } }
 
   config.after_initialize do
-    Bullet.enable        = true
-    Bullet.alert         = true
-    Bullet.bullet_logger = true
-    Bullet.console       = true
-    Bullet.rails_logger  = true
-    Bullet.add_footer    = true
-    # Bullet.sentry = true
-    # Bullet.alert = true
-    # Bullet.bullet_logger = true
-    # Bullet.console = true
-    # Bullet.xmpp = { :account  => 'bullets_account@jabber.org',
-    #                 :password => 'bullets_password_for_jabber',
-    #                 :receiver => 'your_account@jabber.org',
-    #                 :show_online_status => true }
-    # Bullet.rails_logger = true
-    # Bullet.honeybadger = true
-    # Bullet.bugsnag = true
-    # Bullet.appsignal = true
-    # Bullet.airbrake = true
-    # Bullet.rollbar = true
-    # Bullet.add_footer = true
-    # Bullet.skip_html_injection = false
-    # Bullet.stacktrace_includes = [ 'your_gem', 'your_middleware' ]
-    # Bullet.stacktrace_excludes = [ 'their_gem', 'their_middleware', ['my_file.rb', 'my_method'], ['my_file.rb', 16..20] ]
-    # Bullet.slack = { webhook_url: 'http://some.slack.url', channel: '#default', username: 'notifier' }
+    Prosopite.rails_logger = true
   end
-
 end
 
 Rails.application.routes.draw do
@@ -175,20 +154,30 @@ Rails.application.routes.draw do
   # root to: proc{|env| [200, {'Content-type' => 'text/html'}, ['Hello World']]}
 end
 
+class ApplicationController < ActionController::Base
+  unless Rails.env.production?
+    around_action :n_plus_one_detection
+
+
+    def n_plus_one_detection
+      puts 'N+1 detection is enabled'.yellow
+      Prosopite.scan
+      yield
+    ensure
+      Prosopite.finish
+    end
+  end
+end
+
 # Demo controller, will likely be removed.
-class WelcomeController < ActionController::Base
+class WelcomeController < ApplicationController
   def index
     render inline: "Hi! This is a Rails #{Rails.env} environment."
 
     seed(user_count: 2, comment_count: 5)
 
     user = User.first
-    begin
-      user.comments.to_a
-    rescue ActiveRecord::StrictLoadingViolationError => e
-      # Will induce a 304 response when strict loading is enforced.
-      puts e.message.red
-    end
+    user.comments.to_a
   end
 
   def seed(user_count:, comment_count:)
