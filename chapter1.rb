@@ -13,6 +13,8 @@ gemfile(true) do
   gem 'sqlite3'
   gem 'colorize'
   gem 'query_count'
+  gem 'prosopite'
+  gem 'pg_query'
 end
 
 require 'active_record'
@@ -20,12 +22,15 @@ require 'logger'
 require 'sqlite3'
 require 'colorize'
 require 'query_count'
+require 'prosopite'
+
+Prosopite.prosopite_logger = true
 
 require_relative 'setup'
 
 # Define post model
 class User < ApplicationRecord
-  self.strict_loading_by_default = true
+  # self.strict_loading_by_default = true
 
   has_many :comments
 end
@@ -61,9 +66,16 @@ ActiveRecord::Base.logger = Logger.new($stdout)
 
 
 # Page 12. Strict loading on a relation.
-user = User.first
-begin
+# user = User.first
+# begin
+#   user.comments.to_a
+# rescue ActiveRecord::StrictLoadingViolationError => e
+#   puts e.message.red
+# end
+
+result = Prosopite.scan do
+  user = User.first
   user.comments.to_a
-rescue ActiveRecord::StrictLoadingViolationError => e
-  puts e.message.red
 end
+
+puts "Result: #{result}"
