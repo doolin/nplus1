@@ -4,3 +4,4 @@ doc/
 *.db*
 log/
 tmp/
+appmap*

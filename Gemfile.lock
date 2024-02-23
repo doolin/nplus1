@@ -75,6 +75,11 @@ GEM
       minitest (>= 5.1)
       mutex_m
       tzinfo (~> 2.0)
+    appmap (1.0.0)
+      activesupport
+      method_source
+      rack
+      reverse_markdown
     ast (2.4.2)
     base64 (0.2.0)
     bigdecimal (3.1.6)
@@ -110,6 +115,7 @@ GEM
       net-pop
       net-smtp
     marcel (1.0.2)
+    method_source (1.0.0)
     mini_mime (1.1.5)
     mini_portile2 (2.8.5)
     minitest (5.22.2)
@@ -185,6 +191,8 @@ GEM
     regexp_parser (2.9.0)
     reline (0.4.2)
       io-console (~> 0.5)
+    reverse_markdown (2.1.1)
+      nokogiri
     rexml (3.2.6)
     rspec (3.13.0)
       rspec-core (~> 3.13.0)
@@ -256,6 +264,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  appmap
   bullet
   colorize
   puma

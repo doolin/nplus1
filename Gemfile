@@ -2,6 +2,8 @@
 
 source 'https://rubygems.org'
 
+gem 'appmap', :groups => [:development, :test]
+
 gem 'rails'
 gem 'bullet'
 gem 'colorize'
