@@ -1,0 +1,11 @@
+# .rubocop.yml
+AllCops:
+  NewCops: enable
+  Exclude:
+    - 'bullet_demo/**/*'
+    - 'prosopite_demo/**/*'
+
+# Optional: explicitly enable all cops for files not excluded.
+# Depending on your RuboCop version, this might not be necessary as
+# RuboCop enables all cops by default unless they are explicitly disabled.
+

@@ -120,9 +120,7 @@ require 'mini_profiler/asset_version'
 require 'mini_profiler'
 require 'patches/sql_patches'
 require 'patches/net_patches'
-if defined?(::Rails) && defined?(::Rails::VERSION) && ::Rails::VERSION::MAJOR.to_i >= 3
-  require 'mini_profiler_rails/railtie'
-end
+require 'mini_profiler_rails/railtie' if defined?(Rails) && defined?(Rails::VERSION) && Rails::VERSION::MAJOR.to_i >= 3
 ### The lines above ^^^ are from `rack-mini-profiler/lib/rack-mini-profiler.rb`
 
 # The actual Rails application.
@@ -154,10 +152,10 @@ Rails.application.routes.draw do
   # root to: proc{|env| [200, {'Content-type' => 'text/html'}, ['Hello World']]}
 end
 
+# Make rubocop happy
 class ApplicationController < ActionController::Base
   unless Rails.env.production?
     around_action :n_plus_one_detection
-
 
     def n_plus_one_detection
       puts 'N+1 detection is enabled'.yellow

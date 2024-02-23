@@ -2,13 +2,13 @@
 
 source 'https://rubygems.org'
 
-gem 'appmap', :groups => [:development, :test]
+gem 'appmap', groups: %i[development test]
 
-gem 'rails'
 gem 'bullet'
 gem 'colorize'
 gem 'puma'
 gem 'query_count'
+gem 'rails'
 gem 'rspec'
 gem 'rubocop'
 gem 'rubocop-performance'

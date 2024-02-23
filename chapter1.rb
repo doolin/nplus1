@@ -64,7 +64,6 @@ puts banner.yellow
 seed(user_count: 2, comment_count: 5)
 ActiveRecord::Base.logger = Logger.new($stdout)
 
-
 # Page 12. Strict loading on a relation.
 # user = User.first
 # begin
