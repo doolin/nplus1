@@ -43,6 +43,9 @@ gemfile(true) do
   gem 'colorize'
   gem 'query_count'
   gem 'puma'
+  # I might be able to make this work, which would be
+  # really, really cool. How to configure Rack?
+  gem 'debugbar'
 end
 
 require 'rails/all'
