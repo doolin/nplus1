@@ -22,8 +22,15 @@ require 'colorize'
 
 require_relative 'setup'
 
-# Define post model
+# Define user modela
 class User < ApplicationRecord
+  # self.strict_loading_by_default = true
+
+  has_many :comments
+end
+
+# Define post modela
+class Post < ApplicationRecord
   # self.strict_loading_by_default = true
 
   has_many :comments
@@ -43,28 +50,73 @@ def seed(user_count:, comment_count:)
   end
 end
 
-banner = <<~BANNER
-  Strict loading is a feature that helps you to avoid N+1 queries by
-  raising an error when you try to load an association that was not
-  preloaded. This feature is useful to ensure that you are not
-  accidentally loading associations in a loop or in a view.
+def reset_tables
+  ActiveRecord::Base.logger = nil
+  Comment.delete_all
+  Post.delete_all
+  User.delete_all
+  ActiveRecord::Base.logger = Logger.new($stdout)
+end
 
-  In this case, strict loading is being set on the model instead of
-  the association. This means that the error will be raised when you
-  try to load the association from any instance of the model.
+def seed_posts(post_count:, comment_count:)
+  ActiveRecord::Base.logger = nil
+  (1..post_count).each do |i|
+    post = Post.create(title: "Post #{i}")
+    (1..comment_count).each do |j|
+      post.comments.create(body: "Comment #{j}")
+    end
+  end
+  ActiveRecord::Base.logger = Logger.new($stdout)
+end
+
+banner = <<~BANNER
+  Joins by themselves do not preload. By itself it
+  does an inner join.
 BANNER
 puts banner.yellow
 
-seed(user_count: 2, comment_count: 5)
-ActiveRecord::Base.logger = Logger.new($stdout)
+# puts <<~HEREDOC
+#   \e[31mThis text is red.\e[0m
+#   \e[32mThis text is green.\e[0m
+#   \e[33mThis text is yellow.\e[0m
+#   \e[34mThis text is blue.\e[0m
+# HEREDOC
 
-# Page 12. Strict loading on a relation.
-# user = User.first
-# begin
-#   user.comments.to_a
-# rescue ActiveRecord::StrictLoadingViolationError => e
-#   puts e.message.red
-# end
+puts <<~HEREDOC
+  \e[31mWith 1 Post and 2 comments, we make 3 calls to the database.
+  The first call is to get the posts, the second call is to get
+  the first comment, and the third call is to get the second comment.\e[0m
+HEREDOC
+seed_posts(post_count: 1, comment_count: 2)
+posts = Post.joins(:comments)
+puts posts.map(&:comments).to_a
 
-user = User.first
-user.comments.to_a
+reset_tables
+
+puts <<~HEREDOC
+  \e[31mWith 2 posts each match with 1 comment matching the
+  where condition, we still get 3 calls.\e[0m
+HEREDOC
+seed_posts(post_count: 2, comment_count: 1)
+posts = Post.joins(:comments).where('comments.body = ?', 'Comment 1')
+puts posts.map(&:comments).to_a
+
+reset_tables
+
+puts <<~HEREDOC
+  \e[31mWith 2 posts each with 1 comment
+  and preloaded, we get 2 calls.\e[0m
+HEREDOC
+seed_posts(post_count: 2, comment_count: 1)
+posts = Post.joins(:comments).preload(:comments)
+puts posts.map(&:comments).to_a
+
+reset_tables
+
+puts <<~HEREDOC
+  \e[31mWith 2 posts each match with 1 comment matching the where
+  where condition, with preloading we get 2 calls.\e[0m
+HEREDOC
+seed_posts(post_count: 2, comment_count: 1)
+posts = Post.joins(:comments).where('comments.body = ?', 'Comment 1').preload(:comments)
+puts posts.map(&:comments).to_a
