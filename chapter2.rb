@@ -19,6 +19,12 @@ require 'active_record'
 require 'logger'
 require 'sqlite3'
 require 'colorize'
+# puts <<~HEREDOC
+#   \e[31mThis text is red.\e[0m
+#   \e[32mThis text is green.\e[0m
+#   \e[33mThis text is yellow.\e[0m
+#   \e[34mThis text is blue.\e[0m
+# HEREDOC
 
 require_relative 'setup'
 
@@ -41,7 +47,7 @@ class Comment < ApplicationRecord
   belongs_to :user
 end
 
-def seed(user_count:, comment_count:)
+def seed_users(user_count:, comment_count:)
   (1..user_count).each do |i|
     user = User.create(first_name: "Name#{i}")
     (1..comment_count).each do |j|
@@ -69,54 +75,69 @@ def seed_posts(post_count:, comment_count:)
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
 
+##### Everything above this line should carry forward
+##### from page to page. Below is where changes are made
+##### to follow along with the book.
+
 banner = <<~BANNER
-  Joins by themselves do not preload. By itself it
-  does an inner join.
+  Preloading direct associations can be done with
+  `preloads`, `includes`, or `eager_load`.
 BANNER
 puts banner.yellow
 
-# puts <<~HEREDOC
-#   \e[31mThis text is red.\e[0m
-#   \e[32mThis text is green.\e[0m
-#   \e[33mThis text is yellow.\e[0m
-#   \e[34mThis text is blue.\e[0m
-# HEREDOC
-
 puts <<~HEREDOC
-  \e[31mWith 1 Post and 2 comments, we make 3 calls to the database.
-  The first call is to get the posts, the second call is to get
-  the first comment, and the third call is to get the second comment.\e[0m
+  \e[31mThe following will produce n+1. For 2 posts
+  with 2 comments each, we get 5 db calls.\e[0m
 HEREDOC
-seed_posts(post_count: 1, comment_count: 2)
-posts = Post.joins(:comments)
-puts posts.map(&:comments).to_a
+seed_posts(post_count: 2, comment_count: 2)
+posts = Post.all
+posts.each do |post|
+  puts "Post: #{post.title}"
+  puts "Comments count: #{post.comments.size}"
+  puts "Comment sample: #{post.comments.sample.body}"
+end
 
 reset_tables
 
 puts <<~HEREDOC
-  \e[31mWith 2 posts each match with 1 comment matching the
-  where condition, we still get 3 calls.\e[0m
+  \e[31mLet's do the same with preloads on the comment association,
+  which results in 2 db calls instead of 5 as above.\e[0m
 HEREDOC
-seed_posts(post_count: 2, comment_count: 1)
-posts = Post.joins(:comments).where('comments.body = ?', 'Comment 1')
-puts posts.map(&:comments).to_a
+seed_posts(post_count: 2, comment_count: 2)
+posts = Post.all.preload(:comments)
+puts posts.map { |post| post.comments.to_a }
+posts.each do |post|
+  puts "Post: #{post.title}"
+  puts "Comments count: #{post.comments.size}"
+  puts "Comment sample: #{post.comments.sample.body}"
+end
 
 reset_tables
 
 puts <<~HEREDOC
-  \e[31mWith 2 posts each with 1 comment
-  and preloaded, we get 2 calls.\e[0m
+  \e[31mLet's do the same with includes on the comment association,
+  which results in 2 db calls instead of 5 as above.\e[0m
 HEREDOC
-seed_posts(post_count: 2, comment_count: 1)
-posts = Post.joins(:comments).preload(:comments)
-puts posts.map(&:comments).to_a
+seed_posts(post_count: 2, comment_count: 2)
+posts = Post.all.includes(:comments)
+puts posts.map { |post| post.comments.to_a }
+posts.each do |post|
+  puts "Post: #{post.title}"
+  puts "Comments count: #{post.comments.size}"
+  puts "Comment sample: #{post.comments.sample.body}"
+end
 
 reset_tables
 
 puts <<~HEREDOC
-  \e[31mWith 2 posts each match with 1 comment matching the where
-  where condition, with preloading we get 2 calls.\e[0m
+  \e[31mLet's do the same with eager_load on the comment association,
+  which results in 1 db call i with a LEFT OUTER JOIN.\e[0m
 HEREDOC
-seed_posts(post_count: 2, comment_count: 1)
-posts = Post.joins(:comments).where('comments.body = ?', 'Comment 1').preload(:comments)
-puts posts.map(&:comments).to_a
+seed_posts(post_count: 2, comment_count: 2)
+posts = Post.all.eager_load(:comments)
+puts posts.map { |post| post.comments.to_a }
+posts.each do |post|
+  puts "Post: #{post.title}"
+  puts "Comments count: #{post.comments.size}"
+  puts "Comment sample: #{post.comments.sample.body}"
+end
