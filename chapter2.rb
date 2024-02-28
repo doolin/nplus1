@@ -45,6 +45,7 @@ end
 # Define comment model
 class Comment < ApplicationRecord
   belongs_to :user
+  belongs_to :post
 end
 
 def seed_users(user_count:, comment_count:)
@@ -80,64 +81,59 @@ end
 ##### to follow along with the book.
 
 banner = <<~BANNER
-  Preloading direct associations can be done with
+  Preloading belongs_to associations can be done with
   `preloads`, `includes`, or `eager_load`.
 BANNER
 puts banner.yellow
 
-puts <<~HEREDOC
-  \e[31mThe following will produce n+1. For 2 posts
-  with 2 comments each, we get 5 db calls.\e[0m
-HEREDOC
+banner = <<~BANNER
+  The following will produce n+1. For 2 posts
+  with 2 comments each, we get 5 db calls.
+BANNER
+puts banner.red
 seed_posts(post_count: 2, comment_count: 2)
-posts = Post.all
-posts.each do |post|
-  puts "Post: #{post.title}"
-  puts "Comments count: #{post.comments.size}"
-  puts "Comment sample: #{post.comments.sample.body}"
+comments = Comment.all
+comments.each do |comment|
+  puts "Comment: #{comment.body}"
+  puts "Post: #{comment.post.title}"
 end
 
 reset_tables
 
-puts <<~HEREDOC
-  \e[31mLet's do the same with preloads on the comment association,
-  which results in 2 db calls instead of 5 as above.\e[0m
-HEREDOC
+banner = <<~BANNER
+  Let's do the same with preloads on the comment association,
+  which results in 2 db calls instead of 5 as above.
+BANNER
+puts banner.red
 seed_posts(post_count: 2, comment_count: 2)
-posts = Post.all.preload(:comments)
-puts posts.map { |post| post.comments.to_a }
-posts.each do |post|
-  puts "Post: #{post.title}"
-  puts "Comments count: #{post.comments.size}"
-  puts "Comment sample: #{post.comments.sample.body}"
+comments = Comment.preload(:post)
+puts comments.map { |comment| comment.post }
+comments.each do |comment|
+  puts "#{comment.body}, #{comment.post.title}"
 end
 
 reset_tables
 
-puts <<~HEREDOC
-  \e[31mLet's do the same with includes on the comment association,
-  which results in 2 db calls instead of 5 as above.\e[0m
-HEREDOC
+banner = <<~BANNER
+  Let's do the same with includes on the comment association,
+  which results in 2 db calls instead of 5 as above.
+BANNER
+puts banner.red
 seed_posts(post_count: 2, comment_count: 2)
-posts = Post.all.includes(:comments)
-puts posts.map { |post| post.comments.to_a }
-posts.each do |post|
-  puts "Post: #{post.title}"
-  puts "Comments count: #{post.comments.size}"
-  puts "Comment sample: #{post.comments.sample.body}"
+comments = Comment.includes(:post)
+comments.each do |comment|
+  puts "#{comment.body}, #{comment.post.title}"
 end
 
 reset_tables
 
-puts <<~HEREDOC
+banner = <<~BANNER
   \e[31mLet's do the same with eager_load on the comment association,
   which results in 1 db call i with a LEFT OUTER JOIN.\e[0m
-HEREDOC
+BANNER
+puts banner.red
 seed_posts(post_count: 2, comment_count: 2)
-posts = Post.all.eager_load(:comments)
-puts posts.map { |post| post.comments.to_a }
-posts.each do |post|
-  puts "Post: #{post.title}"
-  puts "Comments count: #{post.comments.size}"
-  puts "Comment sample: #{post.comments.sample.body}"
+comments = Comment.eager_load(:post)
+comments.each do |comment|
+  puts "#{comment.body}, #{comment.post.title}"
 end
