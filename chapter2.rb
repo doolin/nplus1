@@ -38,7 +38,7 @@ end
 # Define post modela
 class Post < ApplicationRecord
   # self.strict_loading_by_default = true
-
+  belongs_to :author, class_name: "User"
   has_many :comments
 end
 
@@ -46,9 +46,16 @@ end
 class Comment < ApplicationRecord
   belongs_to :user
   belongs_to :post
+  has_many :votes, class_name: "CommentVote"
 end
 
-def seed_users(user_count:, comment_count:)
+# Define comment vote model
+class CommentVote < ApplicationRecord
+  belongs_to :voter, class_name: "User"
+  belongs_to :comment
+end
+
+  def seed_users(user_count:, comment_count:)
   (1..user_count).each do |i|
     user = User.create(first_name: "Name#{i}")
     (1..comment_count).each do |j|
