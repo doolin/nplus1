@@ -38,7 +38,7 @@ end
 # Define post modela
 class Post < ApplicationRecord
   # self.strict_loading_by_default = true
-  belongs_to :author, class_name: "User"
+  belongs_to :author, class_name: 'User'
   has_many :comments
 end
 
@@ -46,41 +46,13 @@ end
 class Comment < ApplicationRecord
   belongs_to :user
   belongs_to :post
-  has_many :votes, class_name: "CommentVote"
+  has_many :votes, class_name: 'CommentVote'
 end
 
 # Define comment vote model
 class CommentVote < ApplicationRecord
-  belongs_to :voter, class_name: "User"
+  belongs_to :voter, class_name: 'User'
   belongs_to :comment
-end
-
-  def seed_users(user_count:, comment_count:)
-  (1..user_count).each do |i|
-    user = User.create(first_name: "Name#{i}")
-    (1..comment_count).each do |j|
-      user.comments.create(body: "Comment #{j}")
-    end
-  end
-end
-
-def reset_tables
-  ActiveRecord::Base.logger = nil
-  Comment.delete_all
-  Post.delete_all
-  User.delete_all
-  ActiveRecord::Base.logger = Logger.new($stdout)
-end
-
-def seed_posts(post_count:, comment_count:)
-  ActiveRecord::Base.logger = nil
-  (1..post_count).each do |i|
-    post = Post.create(title: "Post #{i}")
-    (1..comment_count).each do |j|
-      post.comments.create(body: "Comment #{j}")
-    end
-  end
-  ActiveRecord::Base.logger = Logger.new($stdout)
 end
 
 ##### Everything above this line should carry forward
@@ -114,7 +86,7 @@ BANNER
 puts banner.red
 seed_posts(post_count: 2, comment_count: 2)
 comments = Comment.preload(:post)
-puts comments.map { |comment| comment.post }
+puts(comments.map { |comment| comment.post })
 comments.each do |comment|
   puts "#{comment.body}, #{comment.post.title}"
 end
