@@ -50,7 +50,7 @@ def reset_tables
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
 
-def seed_posts(post_count:, comment_count:)
+def seed_posts_and_comments(post_count:, comment_count:)
   ActiveRecord::Base.logger = nil
   (1..post_count).each do |i|
     post = Post.create(title: "Post #{i}")
@@ -61,7 +61,7 @@ def seed_posts(post_count:, comment_count:)
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
 
-def seed_users(user_count:, comment_count:)
+def seed_users_and_comments(user_count:, comment_count:)
   (1..user_count).each do |i|
     user = User.create(first_name: "Name#{i}")
     (1..comment_count).each do |j|

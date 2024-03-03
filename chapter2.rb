@@ -65,12 +65,16 @@ banner = <<~BANNER
 BANNER
 puts banner.yellow
 
+
+
+
+
 banner = <<~BANNER
   The following will produce n+1. For 2 posts
   with 2 comments each, we get 5 db calls.
 BANNER
 puts banner.red
-seed_posts(post_count: 2, comment_count: 2)
+seed_posts_and_comments(post_count: 2, comment_count: 2)
 comments = Comment.all
 comments.each do |comment|
   puts "Comment: #{comment.body}"
@@ -84,7 +88,7 @@ banner = <<~BANNER
   which results in 2 db calls instead of 5 as above.
 BANNER
 puts banner.red
-seed_posts(post_count: 2, comment_count: 2)
+seed_posts_and_comments(post_count: 2, comment_count: 2)
 comments = Comment.preload(:post)
 puts(comments.map { |comment| comment.post })
 comments.each do |comment|
@@ -98,7 +102,7 @@ banner = <<~BANNER
   which results in 2 db calls instead of 5 as above.
 BANNER
 puts banner.red
-seed_posts(post_count: 2, comment_count: 2)
+seed_posts_and_comments(post_count: 2, comment_count: 2)
 comments = Comment.includes(:post)
 comments.each do |comment|
   puts "#{comment.body}, #{comment.post.title}"
@@ -111,7 +115,7 @@ banner = <<~BANNER
   which results in 1 db call i with a LEFT OUTER JOIN.\e[0m
 BANNER
 puts banner.red
-seed_posts(post_count: 2, comment_count: 2)
+seed_posts_and_comments(post_count: 2, comment_count: 2)
 comments = Comment.eager_load(:post)
 comments.each do |comment|
   puts "#{comment.body}, #{comment.post.title}"
