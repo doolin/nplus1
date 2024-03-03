@@ -60,63 +60,55 @@ end
 ##### to follow along with the book.
 
 banner = <<~BANNER
-  Preloading belongs_to associations can be done with
-  `preloads`, `includes`, or `eager_load`.
+  From page 25: "Imagine that you want to be able to show a
+  list of posts with its comments count and the names of
+  all of its commenters."
+
+  That is, we want to be able to handle nested associations.
 BANNER
 puts banner.yellow
 
+def seed_comments(count:)
+  ActiveRecord::Base.logger = nil
 
-
-
-
-banner = <<~BANNER
-  The following will produce n+1. For 2 posts
-  with 2 comments each, we get 5 db calls.
-BANNER
-puts banner.red
-seed_posts_and_comments(post_count: 2, comment_count: 2)
-comments = Comment.all
-comments.each do |comment|
-  puts "Comment: #{comment.body}"
-  puts "Post: #{comment.post.title}"
+  post_ids = Post.pluck(:id)
+  user_ids = User.pluck(:id)
+  (1..count).each do |i|
+    Comment.create(body: "Comment #{i}", post_id: post_ids.sample, user_id: user_ids.sample)
+  end
+  ActiveRecord::Base.logger = Logger.new($stdout)
 end
 
-reset_tables
-
 banner = <<~BANNER
-  Let's do the same with preloads on the comment association,
-  which results in 2 db calls instead of 5 as above.
+  The first example is showing the queries when not preloading.
+  We'll use 2 posts and 2 users, then 15 comments and randomly assign.
+  This will result in 20 queries.
 BANNER
 puts banner.red
-seed_posts_and_comments(post_count: 2, comment_count: 2)
-comments = Comment.preload(:post)
-puts(comments.map { |comment| comment.post })
-comments.each do |comment|
-  puts "#{comment.body}, #{comment.post.title}"
+
+seed_posts(count: 2)
+seed_users(count: 2)
+seed_comments(count: 15)
+
+
+Post.all.each do |post|
+  puts
+  puts "Post: #{post.title}"
+  puts "Comments count: #{post.comments.size}"
+  puts "Commenters: #{post.comments.map { |comment| comment.user.first_name }}"
 end
 
-reset_tables
-
 banner = <<~BANNER
-  Let's do the same with includes on the comment association,
-  which results in 2 db calls instead of 5 as above.
+  The next example is showing the queries when preloading.
+  We'll use 2 posts and 2 users, then 15 comments and randomly assign.
+  This will result in 3 queries.
 BANNER
-puts banner.red
-seed_posts_and_comments(post_count: 2, comment_count: 2)
-comments = Comment.includes(:post)
-comments.each do |comment|
-  puts "#{comment.body}, #{comment.post.title}"
-end
+puts banner.yellow
 
-reset_tables
-
-banner = <<~BANNER
-  \e[31mLet's do the same with eager_load on the comment association,
-  which results in 1 db call i with a LEFT OUTER JOIN.\e[0m
-BANNER
-puts banner.red
-seed_posts_and_comments(post_count: 2, comment_count: 2)
-comments = Comment.eager_load(:post)
-comments.each do |comment|
-  puts "#{comment.body}, #{comment.post.title}"
+posts = Post.limit(5).preload(comments: :user)
+posts.each do |post|
+  puts
+  puts "Post: #{post.title}"
+  puts "Comments count: #{post.comments.size}"
+  puts "Commenters: #{post.comments.map { |comment| comment.user.first_name }}"
 end

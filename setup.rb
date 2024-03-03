@@ -69,3 +69,19 @@ def seed_users_and_comments(user_count:, comment_count:)
     end
   end
 end
+
+def seed_posts(count:)
+  ActiveRecord::Base.logger = nil
+  (1..count).each do |i|
+    Post.create(title: "Post #{i}")
+  end
+  ActiveRecord::Base.logger = Logger.new($stdout)
+end
+
+def seed_users(count:)
+  ActiveRecord::Base.logger = nil
+  (1..count).each do |i|
+    User.create(first_name: "Name #{i}")
+  end
+  ActiveRecord::Base.logger = Logger.new($stdout)
+end
