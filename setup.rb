@@ -8,6 +8,7 @@ ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:'
 # Define Schema
 ActiveRecord::Schema.define do
   create_table :posts do |table|
+    table.column :user_id, :bigint
     table.column :title, :string
     table.datetime 'created_at', null: false
     table.datetime 'updated_at', null: false
