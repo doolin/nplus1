@@ -63,8 +63,9 @@ def seed_comments(count:)
   (1..count).each do |i|
     post_id = post_ids.sample
     user_id = user_ids.sample
-    Comment.create(body: "Comment #{i}", post_id:, user_id:)
+    comment = Comment.create(body: "Comment #{i}", post_id:, user_id:)
     Post.find(post_id).update(user_id:)
+    CommentVote.create(comment_id: comment.id, voter_id: user_id)
   end
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
@@ -73,39 +74,38 @@ end
 ##### from page to page. Below is where changes are made
 ##### to follow along with the book.
 
-banner = <<~BANNER
-  From page 26, get posts, comments, and authors. First without
-  preloading, then with preloading.
-BANNER
-puts banner.yellow
-
 seed_posts(count: 2)
 seed_users(count: 2)
 seed_comments(count: 10)
 
 banner = <<~BANNER
-  This is the query without preloading. It will result in 21 queries.
+  From page 27, add votes to comments. First without preloading
+  which makes 27 queries,
 BANNER
 puts banner.red
 
-Comment.all.each do |comment|
+Post.all.each do |post|
   puts
-  puts "Comment: #{comment.body}"
-  puts "Post: #{comment.post.title}"
-  puts "Author: #{comment.post.author.first_name}"
+  puts "Post: #{post.title}"
+  puts "Comments count: #{post.comments.size}"
+  puts "Commenters: #{post.comments.map { |comment| comment.user.first_name }}"
+  top_comment = post.comments.max_by { |comment| comment.votes.size }
+  puts "Top comment: #{top_comment.body}"
+  puts "Top comment votes: #{top_comment.votes.size}"
 end
 
 banner = <<~BANNER
-  The next example is showing the queries when preloading.
-  We'll use 2 posts and 2 users, then 10 comments and randomly assign.
-  This will result in 3 queries.
+  Now we'll preload the comments and votes. This will result in 4 queries.
 BANNER
 puts banner.yellow
 
-comments = Comment.preload(post: :author)
-comments.each do |comment|
+posts = Post.limit(5).preload(comments: %i[user votes])
+posts.each do |post|
   puts
-  puts "Comment: #{comment.body}"
-  puts "Post: #{comment.post.title}"
-  puts "Author: #{comment.post.author.first_name}"
+  puts "Post: #{post.title}"
+  puts "Comments count: #{post.comments.size}"
+  puts "Commenters: #{post.comments.map { |comment| comment.user.first_name }}"
+  top_comment = post.comments.max_by { |comment| comment.votes.size }
+  puts "Top comment: #{top_comment.body}"
+  puts "Top comment votes: #{top_comment.votes.size}"
 end
