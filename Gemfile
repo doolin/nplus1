@@ -5,6 +5,7 @@ source 'https://rubygems.org'
 gem 'appmap', groups: %i[development test]
 
 gem 'bullet'
+gem 'cli-ui'
 gem 'colorize'
 gem 'puma'
 gem 'query_count'

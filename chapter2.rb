@@ -13,12 +13,15 @@ gemfile(true) do
   gem 'sqlite3'
   gem 'colorize'
   gem 'pg_query'
+  gem 'cli-ui' # https://github.com/Shopify/cli-ui
 end
 
 require 'active_record'
 require 'logger'
 require 'sqlite3'
 require 'colorize'
+require 'cli/ui'
+
 # puts <<~HEREDOC
 #   \e[31mThis text is red.\e[0m
 #   \e[32mThis text is green.\e[0m
