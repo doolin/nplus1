@@ -81,34 +81,30 @@ seed_posts(count: 2)
 seed_users(count: 2)
 seed_comments(count: 10)
 
+def print_posts(posts)
+  posts.each do |post|
+    puts
+    puts "Post: #{post.title}"
+    puts "Comments count: #{post.comments.size}"
+    puts "Commenters: #{post.comments.map { |comment| comment.user.first_name }}"
+    top_comment = post.comments.sort_by { |comment| comment.votes.size }.last
+    puts "Top comment: #{top_comment.body}"
+    puts "Top comment votes: #{top_comment.votes.size}"
+    puts "Top comment voters: #{top_comment.votes.map { |vote| vote.voter.first_name }}"
+  end
+end
+
 banner = <<~BANNER
-  From page 27, add votes to comments. First without preloading
-  which makes 27 queries,
+  From page 28, using Post.all results in 28 queries.
 BANNER
 puts banner.red
+posts = Post.all
+print_posts(posts)
 
-Post.all.each do |post|
-  puts
-  puts "Post: #{post.title}"
-  puts "Comments count: #{post.comments.size}"
-  puts "Commenters: #{post.comments.map { |comment| comment.user.first_name }}"
-  top_comment = post.comments.max_by { |comment| comment.votes.size }
-  puts "Top comment: #{top_comment.body}"
-  puts "Top comment votes: #{top_comment.votes.size}"
-end
-
-banner = <<~BANNER
-  Now we'll preload the comments and votes. This will result in 4 queries.
+BANNER = <<~BANNER
+  Now we'll use Post.limit(5).preload(comments: [:user, votes: [:voter]]).
+  This will result in 4 queries.
 BANNER
-puts banner.yellow
-
-posts = Post.limit(5).preload(comments: %i[user votes])
-posts.each do |post|
-  puts
-  puts "Post: #{post.title}"
-  puts "Comments count: #{post.comments.size}"
-  puts "Commenters: #{post.comments.map { |comment| comment.user.first_name }}"
-  top_comment = post.comments.max_by { |comment| comment.votes.size }
-  puts "Top comment: #{top_comment.body}"
-  puts "Top comment votes: #{top_comment.votes.size}"
-end
+puts BANNER.yellow
+posts = Post.limit(5).preload(comments: [:user, votes: [:voter]])
+print_posts(posts)
