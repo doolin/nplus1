@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# See also https://github.com/bhserna/specific_preloading_with_scoped_associations
+
 require 'bundler/inline'
 
 # From https://greg.molnar.io/blog/a-single-file-rails-application/
@@ -94,17 +96,36 @@ def print_posts(posts)
   end
 end
 
-banner = <<~BANNER
-  From page 28, using Post.all results in 28 queries.
-BANNER
-puts banner.red
-posts = Post.all
-print_posts(posts)
+def with_preloads
+  banner = <<~BANNER
+    Now we'll use Post.limit(5).preload(comments: [:user, votes: [:voter]]).
+    This will result in 4 queries.
+    BANNER
+  puts banner.yellow
 
-BANNER = <<~BANNER
-  Now we'll use Post.limit(5).preload(comments: [:user, votes: [:voter]]).
-  This will result in 4 queries.
-BANNER
-puts BANNER.yellow
-posts = Post.limit(5).preload(comments: [:user, votes: [:voter]])
-print_posts(posts)
+  posts = Post.limit(5).preload(comments: [:user, votes: [:voter]])
+  print_posts(posts)
+end
+
+def without_preloads
+  banner = <<~BANNER
+  `From page 28, using Post.all results in 28 queries.
+  BANNER
+  puts banner.red
+
+  posts = Post.all
+  print_posts(posts)
+end
+
+CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
+CLI::UI::Prompt.ask('What language/framework do you use?') do |handler|
+  handler.option('with preloads') do |selection|
+    selection
+    with_preloads
+  end
+
+  handler.option('without preloads') do |selection|
+    selection
+    without_preloads
+  end
+end
