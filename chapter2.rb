@@ -107,7 +107,7 @@ def with_preloads(*args)
   print_posts(posts)
 end
 
-def without_preloads
+def without_preloads(*args)
   banner = <<~BANNER
   `From page 28, using Post.all results in 28 queries.
   BANNER
@@ -120,14 +120,5 @@ end
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('What language/framework do you use?') do |handler|
   handler.option('with preloads callback', &method(:with_preloads))
-
-  handler.option('with preloads') do |selection|
-    # selection
-    with_preloads
-  end
-
-  handler.option('without preloads') do |selection|
-    # selection
-    without_preloads
-  end
+  handler.option('without preloads', &method(:without_preloads))
 end
