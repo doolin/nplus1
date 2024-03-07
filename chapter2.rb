@@ -87,29 +87,15 @@ def print_posts(posts)
   posts.each do |post|
     puts
     puts "Post: #{post.title}"
+    puts "Author: #{post.author.first_name}"
     puts "Comments count: #{post.comments.size}"
     puts "Commenters: #{post.comments.map { |comment| comment.user.first_name }}"
-    top_comment = post.comments.sort_by { |comment| comment.votes.size }.last
-    puts "Top comment: #{top_comment.body}"
-    puts "Top comment votes: #{top_comment.votes.size}"
-    puts "Top comment voters: #{top_comment.votes.map { |vote| vote.voter.first_name }}"
   end
-end
-
-def with_preloads(*args)
-  banner = <<~BANNER
-    Now we'll use Post.limit(5).preload(comments: [:user, votes: [:voter]]).
-    This will result in 4 queries.
-    BANNER
-  puts banner.yellow
-
-  posts = Post.limit(5).preload(comments: [:user, votes: [:voter]])
-  print_posts(posts)
 end
 
 def without_preloads(*args)
   banner = <<~BANNER
-  `From page 28, using Post.all results in 28 queries.
+  `From page 29, using Post.all results in 17 queries.
   BANNER
   puts banner.red
 
@@ -117,8 +103,19 @@ def without_preloads(*args)
   print_posts(posts)
 end
 
+def with_preloads(*args)
+  banner = <<~BANNER
+    Now we'll use Post.limit(5).preload(:author, comments: :user).
+    This will result in 4 queries.
+  BANNER
+  puts banner.yellow
+
+  posts = Post.limit(5).preload(:author, comments: :user)
+  print_posts(posts)
+end
+
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('What language/framework do you use?') do |handler|
-  handler.option('with preloads callback', &method(:with_preloads))
+  handler.option('with preloads', &method(:with_preloads))
   handler.option('without preloads', &method(:without_preloads))
 end
