@@ -96,7 +96,7 @@ def print_posts(posts)
   end
 end
 
-def with_preloads
+def with_preloads(*args)
   banner = <<~BANNER
     Now we'll use Post.limit(5).preload(comments: [:user, votes: [:voter]]).
     This will result in 4 queries.
@@ -119,13 +119,15 @@ end
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('What language/framework do you use?') do |handler|
+  handler.option('with preloads callback', &method(:with_preloads))
+
   handler.option('with preloads') do |selection|
-    selection
+    # selection
     with_preloads
   end
 
   handler.option('without preloads') do |selection|
-    selection
+    # selection
     without_preloads
   end
 end
