@@ -49,9 +49,17 @@ end
 
 # Define comment model
 class Comment < ApplicationRecord
+  POPULAR = 1
+
   belongs_to :user
   belongs_to :post
   has_many :votes, class_name: 'CommentVote'
+
+  # scope :popular, -> { where(likes_count: POPULAR..) }
+
+  def popular?
+    votes.count >= POPULAR
+  end
 end
 
 # Define comment vote model
@@ -81,7 +89,7 @@ end
 
 seed_posts(count: 2)
 seed_users(count: 2)
-seed_comments(count: 10)
+seed_comments(count: 20)
 
 def print_posts(posts)
   posts.each do |post|
@@ -94,23 +102,34 @@ def print_posts(posts)
   end
 end
 
-def without_references(*args)
+def without_scopes(*args)
   banner = <<~BANNER
-    Page 32, Extracting comments from posts using includes/where performs
-    a LEFT OUTER JOIN between posts and comments.
+    This example does not use scopes and filters the results in Ruby.
+    The CommentVotes are not preloaded, inducing n + 1.
   BANNER
-  puts banner.yellow
+  puts banner.red
 
-  posts = Post.includes(:comments).where(comments: {body: "Comment 1"}).to_a
-  print_posts(posts)
+  posts = Post.preload(:comments).limit(5)
+
+  # => SELECT "posts".* FROM "posts" LIMIT $1
+  # => SELECT "comments".* FROM "comments" WHERE "comments"."post_id" IN ($1, $2, $3, $4, $5)
+  posts.each do |post|
+    # render_title(post)
+    puts "Post: #{post.title}"
+
+    # Select just the popular comments
+    popular_comments = post.comments.select(&:popular?)
+    binding.irb
+    post.comments.select(&:popular?).each do |comment|
+      # render_comment(comment)
+      puts "Comment: #{comment.body}"
+    end
+  end
 end
 
-def with_references(*args)
+def with_scopes(*args)
   banner = <<~BANNER
-    Page 32, Extracting comments from posts using includes/where performs
-    a LEFT OUTER JOIN between posts and comments. In this case, the where
-    clause is a string of SQL, so we need to use references to tell Rails
-    to include the comments table in the query.
+
   BANNER
   puts banner.yellow
 
@@ -123,6 +142,6 @@ end
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('What language/framework do you use?') do |handler|
-  handler.option('includes without references', &method(:without_references))
-  handler.option('includes with references', &method(:with_references))
+  handler.option('with scopes', &method(:with_scopes))
+  handler.option('without scopes', &method(:without_scopes))
 end

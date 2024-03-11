@@ -86,3 +86,6 @@ def seed_users(count:)
   end
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
+
+# TODO: seed posts and users
+# This is needed to make sense of popular comments.
