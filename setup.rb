@@ -24,6 +24,7 @@ ActiveRecord::Schema.define do
   create_table :comments do |table|
     table.column :post_id, :integer
     table.column :user_id, :integer
+    table.column :likes_count, :integer
     table.column :body, :string
     table.datetime 'created_at', null: false
     table.datetime 'updated_at', null: false
@@ -89,3 +90,13 @@ end
 
 # TODO: seed posts and users
 # This is needed to make sense of popular comments.
+def seed_users_and_posts(user_count:, post_count:)
+  ActiveRecord::Base.logger = nil
+  (1..user_count).each do |i|
+    user = User.create(first_name: "Name#{i}")
+    (1..post_count).each do |j|
+      user.posts.create(title: "Post #{j}")
+    end
+  end
+  ActiveRecord::Base.logger = Logger.new($stdout)
+end
