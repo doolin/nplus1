@@ -14,6 +14,7 @@ gemfile(true) do
   gem 'rails'
   gem 'sqlite3'
   gem 'colorize'
+  gem 'dotenv' # https://github.com/bkeepers/dotenv
   gem 'pg_query'
   gem 'cli-ui' # https://github.com/Shopify/cli-ui
 end
@@ -47,7 +48,14 @@ class Post < ApplicationRecord
   belongs_to :author, class_name: 'User', foreign_key: 'user_id'
   has_many :comments
 
-  has_many :popular_comments, -> { popular }, class_name: "Comment"
+  has_many :popular_comments, -> { popular }, class_name: 'Comment'
+
+  def comment_voters
+    comments.preload(votes: :voter)
+            .flat_map(&:votes)
+            .flat_map(&:voter)
+            .uniq
+  end
 end
 
 # Define comment model
@@ -86,13 +94,6 @@ def seed_comments(count:)
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
 
-##### Everything above this line should carry forward
-##### from page to page. Below is where changes are made
-##### to follow along with the book.
-
-seed_users_and_posts(user_count: 2, post_count: 2)
-seed_comments(count: 20)
-
 def print_posts(posts)
   posts.each do |post|
     puts
@@ -104,45 +105,37 @@ def print_posts(posts)
   end
 end
 
-def without_scopes(*args)
-  banner = <<~BANNER
-    TPage 35: his example does not use scopes and filters the results in Ruby.
-    The CommentVotes are not preloaded, inducing n + 1.
+##### Everything above this line should carry forward
+##### from page to page. Below is where changes are made
+##### to follow along with the book.
 
-    This is not what the book is asking for, and there is an open thread
-    here on how to preload the CommentVotes.
+seed_users_and_posts(user_count: 2, post_count: 2)
+seed_comments(count: 20)
+
+def single_post(*_args)
+  banner = <<~BANNER
+    Page 38 Simplify preloading with has many through
+    associations. In this case using a single post does
+    not induce n+1 on the associations.
   BANNER
   puts banner.red
 
-  posts = Post.preload(:comments).limit(1)
-
-  posts.each do |post|
-    puts "Post: #{post.title}"
-    popular_comments = post.comments.select(&:popular?)
-    popular_comments.each do |comment|
-      puts "Comment: #{comment.body}, votes count: #{comment.votes.count}"
-    end
-  end
+  post = Post.first
+  puts post.comment_voters
 end
 
-def with_scopes(*args)
+def list_of_posts(*_args)
   banner = <<~BANNER
-    Page 36: using a scope to filter the comments. No join table
-    for counring votes, added a likes_count column to the comments.
+    Page 39 for a list of posts, n+1 is induced on the
+    query.
   BANNER
-  puts banner.yellow
-
-  posts = Post.preload(:popular_comments).limit(1)
-  posts.each do |post|
-    puts "Post: #{post.title}"
-    post.popular_comments.each do |comment|
-      puts "Comment: #{comment.body}, likes count: #{comment.likes_count}"
-    end
-  end
+  puts banner.red
+  posts = Post.all
+  puts posts.each(&:comment_voters)
 end
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
-CLI::UI::Prompt.ask('What language/framework do you use?') do |handler|
-  handler.option('with scopes', &method(:with_scopes))
-  handler.option('without scopes', &method(:without_scopes))
+CLI::UI::Prompt.ask('Which scenario?') do |handler|
+  handler.option('single post', &method(:single_post))
+  handler.option('list of posts', &method(:list_of_posts))
 end
