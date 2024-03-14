@@ -49,6 +49,7 @@ class Post < ApplicationRecord
   has_many :comments
 
   has_many :popular_comments, -> { popular }, class_name: 'Comment'
+  has_many :comment_voters_preloaded, -> { distinct }, through: :comments, source: :voters
 
   def comment_voters
     comments.preload(votes: :voter)
@@ -65,6 +66,7 @@ class Comment < ApplicationRecord
   belongs_to :user
   belongs_to :post
   has_many :votes, class_name: 'CommentVote'
+  has_many :voters, through: :votes
 
   scope :popular, -> { where(likes_count: POPULAR..) }
 
@@ -127,15 +129,29 @@ end
 def list_of_posts(*_args)
   banner = <<~BANNER
     Page 39 for a list of posts, n+1 is induced on the
-    query.
+    query. This makes 13 calls with our current setup.
   BANNER
   puts banner.red
-  posts = Post.all
-  puts posts.each(&:comment_voters)
+
+  puts Post.all.each(&:comment_voters)
+end
+
+def posts_has_many(*_args)
+  banner = <<~BANNER
+    Page 39 I'm not seeing any gain here, and don't know
+    if the 15 calls I'm seeing are correct.
+  BANNER
+  puts banner.red
+
+  # puts Post.all.each(&:comment_voters_preloaded)
+  Post.preload(:comment_voters_preloaded).each do |post|
+    puts post.comment_voters.to_a
+  end
 end
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
   handler.option('single post', &method(:single_post))
   handler.option('list of posts', &method(:list_of_posts))
+  handler.option('posts with has many through', &method(:posts_has_many))
 end

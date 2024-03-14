@@ -9,3 +9,6 @@ AllCops:
 # Depending on your RuboCop version, this might not be necessary as
 # RuboCop enables all cops by default unless they are explicitly disabled.
 
+Metrics/BlockLength:
+  Exclude:
+    - setup.rb
