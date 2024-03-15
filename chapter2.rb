@@ -40,6 +40,7 @@ class User < ApplicationRecord
 
   has_many :posts
   has_many :comments
+  has_many :comment_votes, foreign_key: :voter_id
 end
 
 # Define post modela
@@ -96,9 +97,9 @@ def seed_comments(count:)
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
 
+# rubocop:disable Metrics/AbcSize
 def print_posts(posts)
   posts.each do |post|
-    puts
     puts "Post: #{post.title}"
     puts "Author: #{post.author.first_name}"
     puts "Comments: #{post.comments.map(&:body)}"
@@ -106,6 +107,7 @@ def print_posts(posts)
     puts "Commenters: #{post.comments.map { |comment| comment.user.first_name }}"
   end
 end
+# rubocop:enable Metrics/AbcSize
 
 ##### Everything above this line should carry forward
 ##### from page to page. Below is where changes are made
@@ -114,11 +116,9 @@ end
 seed_users_and_posts(user_count: 2, post_count: 2)
 seed_comments(count: 20)
 
-def single_post(*_args)
+def post_preload_votes(*_args)
   banner = <<~BANNER
-    Page 38 Simplify preloading with has many through
-    associations. In this case using a single post does
-    not induce n+1 on the associations.
+    Page 39, posts preload votes.
   BANNER
   puts banner.red
 
@@ -126,32 +126,29 @@ def single_post(*_args)
   puts post.comment_voters
 end
 
-def list_of_posts(*_args)
+def preload_comment_voters(*_args)
   banner = <<~BANNER
-    Page 39 for a list of posts, n+1 is induced on the
-    query. This makes 13 calls with our current setup.
+    Page 42, this should preload comment voters.
+    This matches what is shown in the book.
   BANNER
-  puts banner.red
+  puts banner.green
 
-  puts Post.all.each(&:comment_voters)
+  Post.preload(:comment_voters_preloaded).to_a.count
 end
 
-def posts_has_many(*_args)
+def eager_load_voters(*_args)
   banner = <<~BANNER
-    Page 39 I'm not seeing any gain here, and don't know
-    if the 15 calls I'm seeing are correct.
+    Page 42, demo for eager load.
   BANNER
-  puts banner.red
+  puts banner.green
 
   # puts Post.all.each(&:comment_voters_preloaded)
-  Post.preload(:comment_voters_preloaded).each do |post|
-    puts post.comment_voters.to_a
-  end
+  Post.eager_load(:comment_voters_preloaded).to_a
 end
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
-  handler.option('single post', &method(:single_post))
-  handler.option('list of posts', &method(:list_of_posts))
-  handler.option('posts with has many through', &method(:posts_has_many))
+  handler.option('single post preloads votes and voters', &method(:post_preload_votes))
+  handler.option('preload voters and count', &method(:preload_comment_voters))
+  handler.option('eager load posts', &method(:eager_load_voters))
 end
