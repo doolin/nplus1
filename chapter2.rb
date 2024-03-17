@@ -17,6 +17,7 @@ gemfile(true) do
   gem 'dotenv' # https://github.com/bkeepers/dotenv
   gem 'pg_query'
   gem 'cli-ui' # https://github.com/Shopify/cli-ui
+  gem 'ffaker'
 end
 
 require 'active_record'
@@ -146,9 +147,59 @@ def eager_load_voters(*_args)
   Post.eager_load(:comment_voters_preloaded).to_a
 end
 
+def custom_query(*_args)
+  banner = <<~BANNER
+    Page 43, custom query, resulting SQL:
+      SELECT DISTINCT users.*, comments.post_id
+      FROM "users"
+      INNER JOIN "comment_votes" ON "comment_votes"."voter_id" = "users"."id"
+      INNER JOIN "comments" ON "comments"."id" = "comment_votes"."comment_id"
+      WHERE "comments"."post_id"
+      IN (
+        SELECT "posts"."id" FROM "posts" LIMIT ?
+      )  [["LIMIT", 30]]
+  BANNER
+  puts banner.green
+
+  posts = Post.limit(30)
+  comment_voters = User
+    .select("users.*, comments.post_id") # selects the user attributes and the post_id of the comment.
+    .joins(comment_votes: [:comment])
+    .distinct
+    .where(comments: { post_id: posts })
+    .to_a
+
+  puts comment_voters
+end
+
+def pick_voters_by_post(*_args)
+  banner = <<~BANNER
+    Page 43, pick voters by post, which makes two calls. The first is the same as
+    the custom query, the second is to post, which is similar to what's in the IN
+    clause of the custom query:
+      SELECT "posts".* FROM "posts" LIMIT ?  [["LIMIT", 30]]
+  BANNER
+  puts banner.green
+
+  # TODO: split this out into its own method.
+  posts = Post.limit(30)
+  comment_voters = User
+    .select("users.*, comments.post_id") # selects the user attributes and the post_id of the comment.
+    .joins(comment_votes: [:comment])
+    .where(comments: { post_id: posts })
+    .distinct
+    .group_by(&:post_id)
+
+  posts.each do |post|
+    puts comment_voters[post.id].map(&:first_name)
+  end
+end
+
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
   handler.option('single post preloads votes and voters', &method(:post_preload_votes))
   handler.option('preload voters and count', &method(:preload_comment_voters))
   handler.option('eager load posts', &method(:eager_load_voters))
+  handler.option('custom query', &method(:custom_query))
+  handler.option('pick_voters_by_posts', &method(:pick_voters_by_post))
 end
