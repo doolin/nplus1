@@ -98,6 +98,27 @@ def seed_comments(count:)
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
 
+class Post::CommentVotersPreload
+  def initialize(posts)
+    @posts = posts
+  end
+
+  def for_post(post)
+    comment_voters[post.id]
+  end
+
+  def comment_voters
+    @comment_voters ||= fetch_records.group_by(&:post_id)
+  end
+
+  def fetch_records
+    User.select("users.*, comments.post_id")
+        .joins(comment_votes: [:comment])
+         .where(comments: { post_id: @posts })
+        .distinct
+  end
+end
+
 # rubocop:disable Metrics/AbcSize
 def print_posts(posts)
   posts.each do |post|
@@ -181,7 +202,6 @@ def pick_voters_by_post(*_args)
   BANNER
   puts banner.green
 
-  # TODO: split this out into its own method.
   posts = Post.limit(30)
   comment_voters = User
     .select("users.*, comments.post_id") # selects the user attributes and the post_id of the comment.
@@ -195,6 +215,21 @@ def pick_voters_by_post(*_args)
   end
 end
 
+def preload_object(*_args)
+  banner = <<~BANNER
+    Page 44, preload object, same SQL as custom query,
+    with a service object to handle the preloading.
+  BANNER
+  puts banner.green
+
+  posts = Post.limit(30)
+  comment_voters = Post::CommentVotersPreload.new(posts)
+
+  posts.each do |post|
+    puts comment_voters.for_post(post).map(&:first_name)
+  end
+end
+
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
   handler.option('single post preloads votes and voters', &method(:post_preload_votes))
@@ -202,4 +237,5 @@ CLI::UI::Prompt.ask('Which scenario?') do |handler|
   handler.option('eager load posts', &method(:eager_load_voters))
   handler.option('custom query', &method(:custom_query))
   handler.option('pick_voters_by_posts', &method(:pick_voters_by_post))
+  handler.option('preloas object', &method(:preload_object))
 end
