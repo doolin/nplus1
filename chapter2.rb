@@ -83,22 +83,8 @@ class CommentVote < ApplicationRecord
   belongs_to :comment
 end
 
-def seed_comments(count:)
-  ActiveRecord::Base.logger = nil
-
-  post_ids = Post.pluck(:id)
-  user_ids = User.pluck(:id)
-  (1..count).each do |i|
-    post_id = post_ids.sample
-    user_id = user_ids.sample
-    likes_count = rand(0..5)
-    comment = Comment.create(body: "Comment #{i}", post_id:, user_id:, likes_count:)
-    CommentVote.create(comment_id: comment.id, voter_id: user_id)
-  end
-  ActiveRecord::Base.logger = Logger.new($stdout)
-end
-
-class Post::CommentVotersPreload
+# Example from Page 44.
+class Post::CommentVotersPreload # rubocop:disable Style/ClassAndModuleChildren
   def initialize(posts)
     @posts = posts
   end
@@ -112,11 +98,26 @@ class Post::CommentVotersPreload
   end
 
   def fetch_records
-    User.select("users.*, comments.post_id")
+    User.select('users.*, comments.post_id')
         .joins(comment_votes: [:comment])
-         .where(comments: { post_id: @posts })
+        .where(comments: { post_id: @posts })
         .distinct
   end
+end
+
+def seed_comments(count:) # rubocop:disable Metrics/MethodLength
+  ActiveRecord::Base.logger = nil
+
+  post_ids = Post.pluck(:id)
+  user_ids = User.pluck(:id)
+  (1..count).each do |i|
+    post_id = post_ids.sample
+    user_id = user_ids.sample
+    likes_count = rand(0..5)
+    comment = Comment.create(body: "Comment #{i}", post_id:, user_id:, likes_count:)
+    CommentVote.create(comment_id: comment.id, voter_id: user_id)
+  end
+  ActiveRecord::Base.logger = Logger.new($stdout)
 end
 
 # rubocop:disable Metrics/AbcSize
@@ -184,11 +185,11 @@ def custom_query(*_args)
 
   posts = Post.limit(30)
   comment_voters = User
-    .select("users.*, comments.post_id") # selects the user attributes and the post_id of the comment.
-    .joins(comment_votes: [:comment])
-    .distinct
-    .where(comments: { post_id: posts })
-    .to_a
+                   .select('users.*, comments.post_id') # selects the user attributes and the post_id of the comment.
+                   .joins(comment_votes: [:comment])
+                   .distinct
+                   .where(comments: { post_id: posts })
+                   .to_a
 
   puts comment_voters
 end
@@ -204,11 +205,11 @@ def pick_voters_by_post(*_args)
 
   posts = Post.limit(30)
   comment_voters = User
-    .select("users.*, comments.post_id") # selects the user attributes and the post_id of the comment.
-    .joins(comment_votes: [:comment])
-    .where(comments: { post_id: posts })
-    .distinct
-    .group_by(&:post_id)
+                   .select('users.*, comments.post_id') # selects the user attributes and the post_id of the comment.
+                   .joins(comment_votes: [:comment])
+                   .where(comments: { post_id: posts })
+                   .distinct
+                   .group_by(&:post_id)
 
   posts.each do |post|
     puts comment_voters[post.id].map(&:first_name)

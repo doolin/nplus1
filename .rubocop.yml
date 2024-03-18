@@ -12,3 +12,12 @@ AllCops:
 Metrics/BlockLength:
   Exclude:
     - setup.rb
+  CountComments: false
+  CountAsOne: ['array', 'heredoc', 'method_call']
+
+Metrics/MethodLength:
+  Exclude:
+    - setup.rb
+  Max: 10
+  CountComments: false
+  CountAsOne: ['array', 'heredoc', 'method_call']
