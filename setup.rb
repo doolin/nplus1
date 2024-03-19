@@ -10,6 +10,7 @@ ActiveRecord::Schema.define do
   create_table :posts do |table|
     table.column :user_id, :bigint
     table.column :title, :string
+    table.column :body, :text
     table.datetime 'created_at', null: false
     table.datetime 'updated_at', null: false
   end
@@ -97,6 +98,21 @@ def seed_users_and_posts(user_count:, post_count:)
     (1..post_count).each do |j|
       user.posts.create(title: "Post #{j}")
     end
+  end
+  ActiveRecord::Base.logger = Logger.new($stdout)
+end
+
+def seed_comments(count:) # rubocop:disable Metrics/MethodLength
+  ActiveRecord::Base.logger = nil
+
+  post_ids = Post.pluck(:id)
+  user_ids = User.pluck(:id)
+  (1..count).each do |i|
+    post_id = post_ids.sample
+    user_id = user_ids.sample
+    likes_count = rand(0..5)
+    comment = Comment.create(body: "Comment #{i}", post_id:, user_id:, likes_count:)
+    CommentVote.create(comment_id: comment.id, voter_id: user_id)
   end
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
