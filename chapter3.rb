@@ -119,6 +119,7 @@ end
 
 def create_comments(posts, users, count, &block)
   user_id = rand(100) + 1
+  # TODO: This is creating 1000 comments at the moment, too many.
   comments_data = posts.flat_map { |post| count.times.map { block.(post, user_id) } }
   Comment.insert_all(comments_data, record_timestamps: true)
 end
@@ -175,7 +176,25 @@ def preload_object(*_args)
   end
 end
 
+ActiveRecord::Base.logger = Logger.new($stdout)
+
+def comments_count(*_args)
+  banner = <<~BANNER
+    Count always calls.
+  BANNER
+  puts banner.green
+
+  post = Post.first
+  puts post.comments.count
+  post.comments.count
+
+  Post.last
+  post.comments.load
+  puts post.comments.count
+end
+
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
   handler.option('preloas object', &method(:preload_object))
+  handler.option('comments count', &method(:comments_count))  
 end
