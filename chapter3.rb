@@ -105,7 +105,7 @@ class Post::CommentVotersPreload # rubocop:disable Style/ClassAndModuleChildren
   end
 end
 
-def create_posts(count, &block)
+def create_posts(users, count, &block)
   posts_data = count.times.map(&block)
   post_ids = Post.insert_all(posts_data, record_timestamps: true).map { |data| data["id"] }
   Post.where(id: post_ids)
@@ -117,33 +117,35 @@ def create_users(count, &block)
   User.where(id: user_ids)
 end
 
-# What needs to be done here is range on count,
-# then map with index for posts, then sample users
-# to get from 1 to 5 comments per post.
 def create_comments(posts, users, count, &block)
-  comments_data = posts.flat_map { |post| count.times.map { block.(post) } }
-  binding.irb
+  user_id = rand(100) + 1
+  comments_data = posts.flat_map { |post| count.times.map { block.(post, user_id) } }
   Comment.insert_all(comments_data, record_timestamps: true)
 end
 
-posts = create_posts(100) do
-  { title: FFaker::CheesyLingo.title, body: FFaker::CheesyLingo.paragraph }
-end
-
 users = create_users(100) do
-  { first_name: FFaker::Name.first_name }
+  { first_name: FFaker::Name.first_name, last_name: FFaker::Name.last_name }
 end
 
-create_comments(posts, users, 1000) do |post, user|
-  { post_id: post.id, user_id: user.id, body: FFaker::CheesyLingo.sentence, likes_count: rand(10) }
+posts = create_posts(users, 100) do
+  { title: FFaker::CheesyLingo.title, body: FFaker::CheesyLingo.paragraph, user_id: users.sample.id }
 end
 
+create_comments(posts, users, 1000) do |post, user_id|
+  { post_id: post.id, user_id: user_id, body: FFaker::CheesyLingo.sentence, likes_count: rand(10) }
+end
 
-# Need to create CommentVoters:
-# CommentVote.create(comment_id: comment.id, voter_id: user_id)
-# This is not in the seeding code.
+def create_comment_votes(count)
+  data = (1..count).to_a.map do
+    {
+      comment_id: rand(100) + 1,
+      voter_id: rand(100) + 1
+    }
+  end
+  CommentVote.insert_all(data, record_timestamps: true)
+end
 
-
+create_comment_votes(100)
 
 ##### Everything above this line should carry forward
 ##### from page to page. Below is where changes are made
@@ -156,11 +158,20 @@ def preload_object(*_args)
   BANNER
   puts banner.green
 
-  posts = Post.limit(30)
+  # Somewhere below this line, something is not working.
+  # It looks like all the CommentVotes are on a single post,
+  # which is wrong, they should be randomly distributed.
+  binding.irb
+
+  posts = Post.limit(2)
+  # TODO: fix this such that it only works with posts which
+  # have comments, and maybe with comments that have votes.
   comment_voters = Post::CommentVotersPreload.new(posts)
 
-  posts.each do |post|
-    puts comment_voters.for_post(post).map(&:first_name)
+  posts.each_with_index do |post, i|
+    puts "Post id: #{post.id}, index: #{i + 1}: #{post.title}"
+    binding.irb
+    puts comment_voters.for_post(post)&.map(&:first_name)
   end
 end
 
