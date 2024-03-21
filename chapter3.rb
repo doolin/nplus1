@@ -184,12 +184,22 @@ def comments_count(*_args)
   BANNER
   puts banner.green
 
+  puts "Press Enter to load post...".green
+  gets
   post = Post.first
+  puts "Press Enter for first call to count...".green
+  gets
   puts post.comments.count
-  post.comments.count
+  puts "Press Enter for second call to count...".green
+  gets
+  puts post.comments.count
 
-  Post.last
-  post.comments.load
+  puts "Press Enter to load comments...".green
+  gets
+  puts = post.comments.load
+  puts "count always performs an SQL COUNT query:".red
+  puts "Press Enter".green
+  gets
   puts post.comments.count
 end
 
