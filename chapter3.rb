@@ -105,22 +105,22 @@ class Post::CommentVotersPreload # rubocop:disable Style/ClassAndModuleChildren
   end
 end
 
-def create_posts(users, count, &block)
-  posts_data = count.times.map(&block)
-  post_ids = Post.insert_all(posts_data, record_timestamps: true).map { |data| data["id"] }
+def create_posts(_users, count, &)
+  posts_data = count.times.map(&)
+  post_ids = Post.insert_all(posts_data, record_timestamps: true).map { |data| data['id'] }
   Post.where(id: post_ids)
 end
 
-def create_users(count, &block)
-  users_data = count.times.map(&block)
-  user_ids = User.insert_all(users_data, record_timestamps: true).map { |data| data["id"] }
+def create_users(count, &)
+  users_data = count.times.map(&)
+  user_ids = User.insert_all(users_data, record_timestamps: true).map { |data| data['id'] }
   User.where(id: user_ids)
 end
 
-def create_comments(posts, users, count, &block)
-  user_id = rand(100) + 1
+def create_comments(posts, _users, count, &block)
+  user_id = rand(1..100)
   # TODO: This is creating 1000 comments at the moment, too many.
-  comments_data = posts.flat_map { |post| count.times.map { block.(post, user_id) } }
+  comments_data = posts.flat_map { |post| count.times.map { block.call(post, user_id) } }
   Comment.insert_all(comments_data, record_timestamps: true)
 end
 
@@ -133,14 +133,14 @@ posts = create_posts(users, 100) do
 end
 
 create_comments(posts, users, 1000) do |post, user_id|
-  { post_id: post.id, user_id: user_id, body: FFaker::CheesyLingo.sentence, likes_count: rand(10) }
+  { post_id: post.id, user_id:, body: FFaker::CheesyLingo.sentence, likes_count: rand(10) }
 end
 
 def create_comment_votes(count)
   data = (1..count).to_a.map do
     {
-      comment_id: rand(100) + 1,
-      voter_id: rand(100) + 1
+      comment_id: rand(1..100),
+      voter_id: rand(1..100)
     }
   end
   CommentVote.insert_all(data, record_timestamps: true)
@@ -178,27 +178,27 @@ end
 
 ActiveRecord::Base.logger = Logger.new($stdout)
 
-def comments_count(*_args)
+def comments_count(*_args) # rubocop:disable Metrics/MethodLength
   banner = <<~BANNER
     Count always calls.
   BANNER
   puts banner.green
 
-  puts "Press Enter to load post...".green
+  puts 'Press Enter to load post...'.green
   gets
   post = Post.first
-  puts "Press Enter for first call to count...".green
+  puts 'Press Enter for first call to count...'.green
   gets
   puts post.comments.count
-  puts "Press Enter for second call to count...".green
+  puts 'Press Enter for second call to count...'.green
   gets
   puts post.comments.count
 
-  puts "Press Enter to load comments...".green
+  puts 'Press Enter to load comments...'.green
   gets
-  puts = post.comments.load
-  puts "count always performs an SQL COUNT query:".red
-  puts "Press Enter".green
+  post.comments.load
+  puts 'count always performs an SQL COUNT query:'.red
+  puts 'Press Enter'.green
   gets
   puts post.comments.count
 end
@@ -206,5 +206,5 @@ end
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
   handler.option('preloas object', &method(:preload_object))
-  handler.option('comments count', &method(:comments_count))  
+  handler.option('comments count', &method(:comments_count))
 end
