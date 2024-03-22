@@ -162,16 +162,18 @@ def preload_object(*_args)
   # Somewhere below this line, something is not working.
   # It looks like all the CommentVotes are on a single post,
   # which is wrong, they should be randomly distributed.
-  binding.irb
+  # binding.irb
 
   posts = Post.limit(2)
   # TODO: fix this such that it only works with posts which
   # have comments, and maybe with comments that have votes.
   comment_voters = Post::CommentVotersPreload.new(posts)
 
+  # binding.irb
+
   posts.each_with_index do |post, i|
     puts "Post id: #{post.id}, index: #{i + 1}: #{post.title}"
-    binding.irb
+    # binding.irb
     puts comment_voters.for_post(post)&.map(&:first_name)
   end
 end
@@ -203,8 +205,26 @@ def comments_count(*_args) # rubocop:disable Metrics/MethodLength
   puts post.comments.count
 end
 
+def comments_length(*_args) # rubocop:disable Metrics/MethodLength
+  banner = <<~BANNER
+    Length always calls.
+  BANNER
+  puts banner.green
+
+  puts 'Press Enter to load post...'.green
+  gets
+  post = Post.first
+  puts 'Press Enter for first call to post.comments.length, which has a SQL call.'.green
+  gets
+  puts post.comments.length
+  puts "Press Enter for second call to post.comments.length.\nThere is no SQL call".green
+  gets
+  puts post.comments.length
+end
+
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
-  handler.option('preloas object', &method(:preload_object))
+  handler.option('comments length', &method(:comments_length))
   handler.option('comments count', &method(:comments_count))
+  handler.option('preloas object', &method(:preload_object))
 end
