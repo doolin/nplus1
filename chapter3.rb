@@ -180,6 +180,7 @@ end
 
 ActiveRecord::Base.logger = Logger.new($stdout)
 
+# rubocop:disable Metrics/AbcSize
 def comments_count(*_args) # rubocop:disable Metrics/MethodLength
   banner = <<~BANNER
     Count always calls.
@@ -207,7 +208,7 @@ end
 
 def comments_length(*_args) # rubocop:disable Metrics/MethodLength
   banner = <<~BANNER
-    Length always calls.
+    Length loads and calculates with Ruby.
   BANNER
   puts banner.green
 
@@ -222,8 +223,68 @@ def comments_length(*_args) # rubocop:disable Metrics/MethodLength
   puts post.comments.length
 end
 
+def comments_loaded_length(*_args) # rubocop:disable Metrics/MethodLength
+  banner = <<~BANNER
+    Loaded length does not call SQL.
+  BANNER
+  puts banner.green
+
+  puts 'Press Enter to load post...'.green
+  gets
+  post = Post.first
+  puts 'Press Enter to load comments as an array...'.green
+  gets
+  post.comments.to_a
+  puts post.comments.first
+  puts 'Press Enter for first call to post.comments.length, which does not call SQL.'.green
+  gets
+  puts post.comments.length
+end
+
+def comments_loaded_size(*_args) # rubocop:disable Metrics/MethodLength
+  banner = <<~BANNER
+    Loaded size does not call SQL if already loaded in Ruby.
+  BANNER
+  puts banner.green
+
+  puts 'Press Enter to load post...'.green
+  gets
+  post = Post.first
+  puts 'Press Enter to load comments...'.green
+  gets
+  post.comments.load
+  puts 'Press Enter for first call to post.comments.size, which does not call SQL.'.green
+  gets
+  puts post.comments.size
+end
+
+def comments_not_loaded_size(*_args) # rubocop:disable Metrics/MethodLength
+  banner = <<~BANNER
+    Not loaded size always calls SQL.
+  BANNER
+  puts banner.green
+
+  puts 'Press Enter to load post...'.green
+  gets
+  post = Post.first
+  puts 'Press Enter for first call to post.comments.size, which calls SQL with a COUNT query.'.green
+  puts 'but does not load comments'.red
+  gets
+  puts post.comments.size
+  puts 'Press Enter for comments load which calls SQL as size does not load.'.green
+  gets
+  post.comments.load
+  puts 'Press Enter for second call to post.comments.size, which makes another COUNT query.'.red
+  gets
+  puts post.comments.size
+end
+# rubocop:enable Metrics/AbcSize
+
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
+  handler.option('comments not loaded size', &method(:comments_not_loaded_size))
+  handler.option('comments loaded size', &method(:comments_loaded_size))
+  handler.option('comments loaded length', &method(:comments_loaded_length))
   handler.option('comments length', &method(:comments_length))
   handler.option('comments count', &method(:comments_count))
   handler.option('preloas object', &method(:preload_object))
