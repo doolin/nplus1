@@ -49,6 +49,7 @@ class Post < ApplicationRecord
   # self.strict_loading_by_default = true
   belongs_to :author, class_name: 'User', foreign_key: 'user_id'
   has_many :comments
+  has_many :likes
 
   has_many :popular_comments, -> { popular }, class_name: 'Comment'
   has_many :comment_voters_preloaded, -> { distinct }, through: :comments, source: :voters
@@ -59,6 +60,11 @@ class Post < ApplicationRecord
             .flat_map(&:voter)
             .uniq
   end
+end
+
+# An anonymous like for posts.
+class Like < ApplicationRecord
+  belongs_to :post, counter_cache: true
 end
 
 # Define comment model
@@ -124,6 +130,12 @@ def create_comments(posts, _users, count, &block)
   Comment.insert_all(comments_data, record_timestamps: true)
 end
 
+def create_likes(posts, count, &block)
+  data = posts.flat_map { |post| count.times.map { block.call(post) } }
+  Like.insert_all(data, record_timestamps: true)
+end
+
+
 users = create_users(100) do
   { first_name: FFaker::Name.first_name, last_name: FFaker::Name.last_name }
 end
@@ -146,7 +158,11 @@ def create_comment_votes(count)
   CommentVote.insert_all(data, record_timestamps: true)
 end
 
+
 create_comment_votes(100)
+create_likes(posts, 10) do |post|
+  { post_id: post.id }
+end
 
 ##### Everything above this line should carry forward
 ##### from page to page. Below is where changes are made
@@ -180,112 +196,22 @@ end
 
 ActiveRecord::Base.logger = Logger.new($stdout)
 
-# rubocop:disable Metrics/AbcSize
-def comments_count(*_args) # rubocop:disable Metrics/MethodLength
+def likes_count(*_args)
   banner = <<~BANNER
-    Count always calls.
+    Counting likes with counter_cache.
   BANNER
   puts banner.green
 
   puts 'Press Enter to load post...'.green
   gets
-  post = Post.first
-  puts 'Press Enter for first call to count...'.green
+  post = Post.all.sample
+  puts 'Press Enter for first call to post.likes.count...'.green
   gets
-  puts post.comments.count
-  puts 'Press Enter for second call to count...'.green
-  gets
-  puts post.comments.count
-
-  puts 'Press Enter to load comments...'.green
-  gets
-  post.comments.load
-  puts 'count always performs an SQL COUNT query:'.red
-  puts 'Press Enter'.green
-  gets
-  puts post.comments.count
+  puts post.likes.size
 end
-
-def comments_length(*_args) # rubocop:disable Metrics/MethodLength
-  banner = <<~BANNER
-    Length loads and calculates with Ruby.
-  BANNER
-  puts banner.green
-
-  puts 'Press Enter to load post...'.green
-  gets
-  post = Post.first
-  puts 'Press Enter for first call to post.comments.length, which has a SQL call.'.green
-  gets
-  puts post.comments.length
-  puts "Press Enter for second call to post.comments.length.\nThere is no SQL call".green
-  gets
-  puts post.comments.length
-end
-
-def comments_loaded_length(*_args) # rubocop:disable Metrics/MethodLength
-  banner = <<~BANNER
-    Loaded length does not call SQL.
-  BANNER
-  puts banner.green
-
-  puts 'Press Enter to load post...'.green
-  gets
-  post = Post.first
-  puts 'Press Enter to load comments as an array...'.green
-  gets
-  post.comments.to_a
-  puts post.comments.first
-  puts 'Press Enter for first call to post.comments.length, which does not call SQL.'.green
-  gets
-  puts post.comments.length
-end
-
-def comments_loaded_size(*_args) # rubocop:disable Metrics/MethodLength
-  banner = <<~BANNER
-    Loaded size does not call SQL if already loaded in Ruby.
-  BANNER
-  puts banner.green
-
-  puts 'Press Enter to load post...'.green
-  gets
-  post = Post.first
-  puts 'Press Enter to load comments...'.green
-  gets
-  post.comments.load
-  puts 'Press Enter for first call to post.comments.size, which does not call SQL.'.green
-  gets
-  puts post.comments.size
-end
-
-def comments_not_loaded_size(*_args) # rubocop:disable Metrics/MethodLength
-  banner = <<~BANNER
-    Not loaded size always calls SQL.
-  BANNER
-  puts banner.green
-
-  puts 'Press Enter to load post...'.green
-  gets
-  post = Post.first
-  puts 'Press Enter for first call to post.comments.size, which calls SQL with a COUNT query.'.green
-  puts 'but does not load comments'.red
-  gets
-  puts post.comments.size
-  puts 'Press Enter for comments load which calls SQL as size does not load.'.green
-  gets
-  post.comments.load
-  puts 'Press Enter for second call to post.comments.size, which makes another COUNT query.'.red
-  gets
-  puts post.comments.size
-end
-# rubocop:enable Metrics/AbcSize
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
-  handler.option('comments not loaded size', &method(:comments_not_loaded_size))
-  handler.option('comments loaded size', &method(:comments_loaded_size))
-  handler.option('comments loaded length', &method(:comments_loaded_length))
-  handler.option('comments length', &method(:comments_length))
-  handler.option('comments count', &method(:comments_count))
+  handler.option('likes count', &method(:likes_count))
   handler.option('preloas object', &method(:preload_object))
 end
