@@ -210,48 +210,25 @@ def likes_count(*_args)
   puts post.likes.size
 end
 
-def count_then_load(*_args)
+def count_in_list(*_args)
   banner = <<~BANNER
-    Page 53, Load first post with comments and likes.
+    Page 53, 54, counting inside a list induces N+1 queries.
   BANNER
   puts banner.green
 
-  posts = Post.all
-  puts 'Calling count does not load.'.green
-  puts posts.count
-  puts 'Press Enter'.green
+  puts 'Press Enter to load post...'.green
   gets
-  puts 'Posts now need to be loaded.'.green
-  posts.each do |post|
-    puts post.title
-    puts post.body
-    exit
-  end
-end
-
-def load_then_count(*_args)
-  banner = <<~BANNER
-    Page 53, Load first then count.
-  BANNER
-  puts banner.green
-
-  posts = Post.all
-  puts 'Loading posts.load.siez'.green
-  puts posts.load.size
-  puts 'Press Enter'.green
+  posts = Post.all.limit(5)
+  puts 'Press Enter for comment counting n+1...'.green
   gets
-  puts 'Posts should already be loaded.'.green
   posts.each do |post|
-    puts post.title
-    puts post.body
-    exit
+    puts post.comments.count
   end
 end
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
-  handler.option('load_then_count', &method(:load_then_count))
-  handler.option('count_then_load', &method(:count_then_load))
+  handler.option('count_in_list', &method(:count_in_list))
   handler.option('likes count', &method(:likes_count))
   handler.option('preloas object', &method(:preload_object))
 end
