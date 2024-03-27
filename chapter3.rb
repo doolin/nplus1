@@ -226,9 +226,26 @@ def count_in_list(*_args)
   end
 end
 
+def preload_list(*_args)
+  banner = <<~BANNER
+    Page 54, preloading associations for counting in a list.
+  BANNER
+  puts banner.green
+
+  puts 'Press Enter to preload comments...'.green
+  gets
+  posts = Post.all.limit(5).preload(:comments)
+  puts 'Press Enter for comment counting n+1...'.red
+  gets
+  posts.each do |post|
+    puts post.comments.count
+  end
+end
+
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
-  handler.option('count_in_list', &method(:count_in_list))
+  handler.option('preload list', &method(:preload_list))
+  handler.option('count in list', &method(:count_in_list))
   handler.option('likes count', &method(:likes_count))
   handler.option('preloas object', &method(:preload_object))
 end
