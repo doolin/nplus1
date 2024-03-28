@@ -196,56 +196,73 @@ end
 
 ActiveRecord::Base.logger = Logger.new($stdout)
 
+# def likes_count(*_args)
+#   banner = <<~BANNER
+#     Counting likes with counter_cache.
+#   BANNER
+#   puts banner.green
+
+#   puts 'Press Enter to load post...'.green
+#   gets
+#   post = Post.all.sample
+#   puts 'Press Enter for first call to post.likes.count...'.green
+#   gets
+#   puts post.likes.size
+# end
+
+# def count_in_list(*_args)
+#   banner = <<~BANNER
+#     Page 53, 54, counting inside a list induces N+1 queries.
+#   BANNER
+#   puts banner.green
+
+#   puts 'Press Enter to load post...'.green
+#   gets
+#   posts = Post.all.limit(5)
+#   puts 'Press Enter for comment counting n+1...'.green
+#   gets
+#   posts.each do |post|
+#     puts post.comments.count
+#   end
+# end
+
 def likes_count(*_args)
   banner = <<~BANNER
-    Counting likes with counter_cache.
+    Page 56, counting likes with no preload.
   BANNER
   puts banner.green
 
-  puts 'Press Enter to load post...'.green
-  gets
-  post = Post.all.sample
-  puts 'Press Enter for first call to post.likes.count...'.green
-  gets
-  puts post.likes.size
-end
-
-def count_in_list(*_args)
-  banner = <<~BANNER
-    Page 53, 54, counting inside a list induces N+1 queries.
-  BANNER
-  puts banner.green
-
-  puts 'Press Enter to load post...'.green
+  puts 'Press Enter to load posts'.green
   gets
   posts = Post.all.limit(5)
-  puts 'Press Enter for comment counting n+1...'.green
+  puts 'Press Enter for likes counting n+1...'.red
   gets
   posts.each do |post|
-    puts post.comments.count
+    puts post.likes.count
   end
 end
 
-def preload_list(*_args)
+def preload_likes_count(*_args)
   banner = <<~BANNER
-    Page 54, preloading associations for counting in a list.
+    Page 56, preloading likes, which could introduce
+    a performance issue.
   BANNER
   puts banner.green
 
-  puts 'Press Enter to preload comments...'.green
+  puts 'Press Enter to load posts'.green
   gets
-  posts = Post.all.limit(5).preload(:comments)
-  puts 'Press Enter for comment counting n+1...'.red
+  posts = Post.all.limit(5)
+  puts 'Press Enter for preloading likes counts...'.green
   gets
-  posts.each do |post|
-    puts post.comments.count
+  posts.preload(:likes).each do |post|
+    puts post.likes.length
   end
 end
+
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
-  handler.option('preload list', &method(:preload_list))
-  handler.option('count in list', &method(:count_in_list))
   handler.option('likes count', &method(:likes_count))
+  handler.option('preload likes count', &method(:preload_likes_count))
   handler.option('preloas object', &method(:preload_object))
 end
