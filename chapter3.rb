@@ -259,9 +259,32 @@ def preload_likes_count(*_args)
   end
 end
 
+def count_from_association(*_args)
+  banner = <<~BANNER
+    Page 57, counting from association.
+  BANNER
+  puts banner.green
+
+  puts 'Press Enter to load posts and likes'.green
+  gets
+  posts = Post.all.limit(5)
+  likes = Like.where(post_id: posts)
+  puts 'Press Enter for counting likes from association...'.green
+  gets
+  cmd = "likes.group(:post_id).count"
+  counts = eval(cmd)
+  puts counts
+  posts.each do |post|
+    # 3. Find the likes count for the current post
+    # 4. Fallback to zero if no count
+    puts "Post: #{post.id}, likes: #{counts[post.id] || 0}"
+  end
+end
+
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
+  handler.option('count from association', &method(:count_from_association))
   handler.option('likes count', &method(:likes_count))
   handler.option('preload likes count', &method(:preload_likes_count))
   handler.option('preloas object', &method(:preload_object))
