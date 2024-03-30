@@ -151,7 +151,6 @@ def create_likes(posts, count, &block)
   Like.insert_all(data, record_timestamps: true)
 end
 
-
 users = create_users(100) do
   { first_name: FFaker::Name.first_name, last_name: FFaker::Name.last_name }
 end
@@ -173,7 +172,6 @@ def create_comment_votes(count)
   end
   CommentVote.insert_all(data, record_timestamps: true)
 end
-
 
 create_comment_votes(100)
 create_likes(posts, 10) do |post|
@@ -211,36 +209,6 @@ def preload_object(*_args)
 end
 
 ActiveRecord::Base.logger = Logger.new($stdout)
-
-# def likes_count(*_args)
-#   banner = <<~BANNER
-#     Counting likes with counter_cache.
-#   BANNER
-#   puts banner.green
-
-#   puts 'Press Enter to load post...'.green
-#   gets
-#   post = Post.all.sample
-#   puts 'Press Enter for first call to post.likes.count...'.green
-#   gets
-#   puts post.likes.size
-# end
-
-# def count_in_list(*_args)
-#   banner = <<~BANNER
-#     Page 53, 54, counting inside a list induces N+1 queries.
-#   BANNER
-#   puts banner.green
-
-#   puts 'Press Enter to load post...'.green
-#   gets
-#   posts = Post.all.limit(5)
-#   puts 'Press Enter for comment counting n+1...'.green
-#   gets
-#   posts.each do |post|
-#     puts post.comments.count
-#   end
-# end
 
 def likes_count(*_args)
   banner = <<~BANNER
@@ -284,11 +252,11 @@ def count_from_association(*_args)
   puts 'Press Enter to load posts and likes'.green
   gets
   posts = Post.all.limit(5)
-  likes = Like.where(post_id: posts)
+  _likes = Like.where(post_id: posts)
   puts 'Press Enter for counting likes from association...'.green
   gets
-  cmd = "likes.group(:post_id).count"
-  counts = eval(cmd)
+  cmd = 'likes.group(:post_id).count'
+  counts = eval(cmd) # rubocop:disable Security/Eval
   puts counts
   posts.each do |post|
     # 3. Find the likes count for the current post
@@ -308,7 +276,7 @@ def count_joined_association(*_args)
   posts = Post.all.limit(5)
   puts 'Press Enter for counting likes with join...'.green
   gets
-  counts = Post.joins(:likes).group("posts.id").count("likes.id")
+  counts = Post.joins(:likes).group('posts.id').count('likes.id')
   puts "Counts: #{counts}"
   posts.each do |post|
     puts "Post: #{post.id}, likes: #{counts[post.id] || 0}"
@@ -326,7 +294,7 @@ def count_left_joined(*_args)
   posts = Post.all.limit(5)
   puts 'Press Enter for counting likes with left join...'.green
   gets
-  counts = Post.left_joins(:likes).group("posts.id").count("likes.id")
+  counts = Post.left_joins(:likes).group('posts.id').count('likes.id')
   puts "Counts: #{counts}"
   posts.each do |post|
     puts "Post: #{post.id}, likes: #{counts[post.id]}"
@@ -346,9 +314,9 @@ def count_selected_values(*_args)
   puts 'Press Enter for selecting and counting likes on a left join.'.green
   gets
   posts = posts
-    .left_joins(:likes)
-    .select("posts.*, COUNT(likes.id) as likes_count")
-    .group("posts.id")
+          .left_joins(:likes)
+          .select('posts.*, COUNT(likes.id) as likes_count')
+          .group('posts.id')
 
   posts.each do |post|
     puts "Post: #{post.id}, likes: #{post[:likes_count]}"
