@@ -261,7 +261,7 @@ end
 
 def count_from_association(*_args)
   banner = <<~BANNER
-    Page 57, counting from association.
+    Page 56, counting from association.
   BANNER
   puts banner.green
 
@@ -281,9 +281,28 @@ def count_from_association(*_args)
   end
 end
 
+def count_joined_association(*_args)
+  banner = <<~BANNER
+    Page 57, counting joined association.
+  BANNER
+  puts banner.green
+
+  puts 'Press Enter to load posts'.green
+  gets
+  posts = Post.all.limit(5)
+  puts 'Press Enter for counting likes with join...'.green
+  gets
+  counts = Post.joins(:likes).group("posts.id").count("likes.id")
+  puts "Counts: #{counts}"
+  posts.each do |post|
+    puts "Post: #{post.id}, likes: #{counts[post.id] || 0}"
+  end
+end
+
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
+  handler.option('count joined association', &method(:count_joined_association))
   handler.option('count from association', &method(:count_from_association))
   handler.option('likes count', &method(:likes_count))
   handler.option('preload likes count', &method(:preload_likes_count))
