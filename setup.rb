@@ -11,7 +11,7 @@ ActiveRecord::Schema.define do
     table.column :user_id, :bigint
     table.column :title, :string
     table.column :body, :text
-    table.column :likes_count, :integer
+    # table.column :likes_count, :integer
     table.datetime 'created_at', null: false
     table.datetime 'updated_at', null: false
   end

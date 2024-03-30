@@ -299,7 +299,7 @@ def count_joined_association(*_args)
   end
 end
 
-def count_leftjoined(*_args)
+def count_left_joined(*_args)
   banner = <<~BANNER
     Page 58, counting with left joined association.
   BANNER
@@ -319,7 +319,7 @@ end
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
-  handler.option('count left joined', &method(:count_leftjoined))
+  handler.option('count left joined', &method(:count_left_joined))
   handler.option('count joined association', &method(:count_joined_association))
   handler.option('count from association', &method(:count_from_association))
   handler.option('likes count', &method(:likes_count))
