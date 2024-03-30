@@ -317,8 +317,31 @@ def count_left_joined(*_args)
   end
 end
 
+def count_selected_values(*_args)
+  banner = <<~BANNER
+    Page 59, counting selected values.
+  BANNER
+  puts banner.green
+
+  puts 'Press Enter to load posts'.green
+  gets
+  posts = Post.all.limit(5)
+
+  puts 'Press Enter for selecting and counting likes on a left join.'.green
+  gets
+  posts = posts
+    .left_joins(:likes)
+    .select("posts.*, COUNT(likes.id) as likes_count")
+    .group("posts.id")
+
+  posts.each do |post|
+    puts "Post: #{post.id}, likes: #{post[:likes_count]}"
+  end
+end
+
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
+  handler.option('count selected values', &method(:count_selected_values))
   handler.option('count left joined', &method(:count_left_joined))
   handler.option('count joined association', &method(:count_joined_association))
   handler.option('count from association', &method(:count_from_association))
