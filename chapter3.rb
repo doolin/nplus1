@@ -111,6 +111,22 @@ class Post::CommentVotersPreload # rubocop:disable Style/ClassAndModuleChildren
   end
 end
 
+class LikesCounts
+  attr_reader :posts
+
+  def initialize(posts)
+    @posts = posts
+  end
+
+  def [](post)
+    counts[post.id] || 0
+  end
+
+  def counts
+    @counts ||= Like.where(post_id: posts).group(:post_id).count
+  end
+end
+
 def create_posts(_users, count, &)
   posts_data = count.times.map(&)
   post_ids = Post.insert_all(posts_data, record_timestamps: true).map { |data| data['id'] }
@@ -339,8 +355,27 @@ def count_selected_values(*_args)
   end
 end
 
+def preload_likes_object(*_args)
+  banner = <<~BANNER
+    Page 60, preload likes object.
+  BANNER
+  puts banner.green
+
+  puts 'Press Enter to load posts'.green
+  gets
+  posts = Post.all.limit(5)
+  counts = LikesCounts.new(posts)
+
+  puts 'Press Enter for preloading likes...'.green
+  gets
+  posts.each do |post|
+    puts "Post: #{post.id}, likes: #{counts[post]}"
+  end
+end
+
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
+  handler.option('preload likes object', &method(:preload_likes_object))
   handler.option('count selected values', &method(:count_selected_values))
   handler.option('count left joined', &method(:count_left_joined))
   handler.option('count joined association', &method(:count_joined_association))
