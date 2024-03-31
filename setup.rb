@@ -11,7 +11,8 @@ ActiveRecord::Schema.define do
     t.column :user_id, :bigint
     t.column :title, :string
     t.column :body, :text
-    t.integer :likes_total
+    t.integer :likes_count, default: 0, null: false
+    # t.integer :likes_total
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
   end
@@ -56,6 +57,7 @@ def reset_tables
   Comment.delete_all
   Post.delete_all
   User.delete_all
+  Likes.delete_all
   CommentVote.delete_all
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
@@ -120,6 +122,17 @@ def seed_comments(count:) # rubocop:disable Metrics/MethodLength
     likes_count = rand(0..5)
     comment = Comment.create(body: "Comment #{i}", post_id:, user_id:, likes_count:)
     CommentVote.create(comment_id: comment.id, voter_id: user_id)
+  end
+  ActiveRecord::Base.logger = Logger.new($stdout)
+end
+
+def seed_poste_and_likes(post_count:, like_count:)
+  ActiveRecord::Base.logger = nil
+  (1..post_count).each do |i|
+    post = Post.create(title: "Name#{i}")
+    (1..rand(like_count)).each do |j|
+      post.likes.create
+    end
   end
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
