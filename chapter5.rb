@@ -162,9 +162,37 @@ def preload_object(*_args)
   end
 end
 
+def use_counter_cache(*_args)
+  banner = <<~BANNER
+    Page 66, use counter cache with custom name.
+  BANNER
+  puts banner.green
+
+  posts = Post.limit(10)
+  posts.each do |post|
+    puts "Likes count: #{post.likes_count}"
+    puts "Post.likes.size: #{post.likes.size}"
+  end
+end
+
+def custom_cache_name(*_args)
+  banner = <<~BANNER
+    Page 66, custom cache name likes_total.
+  BANNER
+  puts banner.green
+
+  posts = Post.limit(10)
+  posts.each do |post|
+    puts "Likes count: #{post.likes_total}"
+    puts "Post.likes.size: #{post.likes.size}"
+  end
+end
+
 ActiveRecord::Base.logger = Logger.new($stdout)
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
+  handler.option('custom cache name', &method(:custom_cache_name))
+  handler.option('use counter cache', &method(:use_counter_cache))
   handler.option('preload object', &method(:preload_object))
 end
