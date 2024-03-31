@@ -49,7 +49,7 @@ class Post < ApplicationRecord
   # self.strict_loading_by_default = true
   belongs_to :author, class_name: 'User', foreign_key: 'user_id'
   has_many :comments
-  has_many :likes
+  has_many :likes, counter_cache: :likes_total
 
   has_many :popular_comments, -> { popular }, class_name: 'Comment'
   has_many :comment_voters_preloaded, -> { distinct }, through: :comments, source: :voters
@@ -64,7 +64,7 @@ end
 
 # An anonymous like for posts.
 class Like < ApplicationRecord
-  belongs_to :post, counter_cache: true
+  belongs_to :post, counter_cache: :likes_total
 end
 
 # Define comment model

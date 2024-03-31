@@ -7,13 +7,13 @@ ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:'
 
 # Define Schema
 ActiveRecord::Schema.define do
-  create_table :posts do |table|
-    table.column :user_id, :bigint
-    table.column :title, :string
-    table.column :body, :text
-    table.column :likes_count, :integer
-    table.datetime 'created_at', null: false
-    table.datetime 'updated_at', null: false
+  create_table :posts do |t|
+    t.column :user_id, :bigint
+    t.column :title, :string
+    t.column :body, :text
+    t.integer :likes_total
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
   end
 
   create_table :likes do |t|
