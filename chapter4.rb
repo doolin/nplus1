@@ -49,6 +49,7 @@ class Post < ApplicationRecord
   # self.strict_loading_by_default = true
   belongs_to :author, class_name: 'User', foreign_key: 'user_id'
   has_many :comments
+  # Will do n+1 if the counter cache is not defined.
   has_many :likes # , counter_cache: :likes_total
 
   has_many :popular_comments, -> { popular }, class_name: 'Comment'
@@ -64,7 +65,7 @@ end
 
 # An anonymous like for posts.
 class Like < ApplicationRecord
-  belongs_to :post, counter_cache: true
+  belongs_to :post, counter_cache: :likes_total
 end
 
 # Define comment model
@@ -111,6 +112,7 @@ class Post::CommentVotersPreload # rubocop:disable Style/ClassAndModuleChildren
   end
 end
 
+# A preload object.
 class LikesCounts
   attr_reader :posts
 
@@ -127,66 +129,8 @@ class LikesCounts
   end
 end
 
-# Create synthetic data.
-class Provision
-  def initialize  
-    def create_posts(_users, count, &)
-      posts_data = count.times.map(&)
-      post_ids = Post.insert_all(posts_data, record_timestamps: true).map { |data| data['id'] }
-      Post.where(id: post_ids)
-    end
-
-    def create_users(count, &)
-      users_data = count.times.map(&)
-      user_ids = User.insert_all(users_data, record_timestamps: true).map { |data| data['id'] }
-      User.where(id: user_ids)
-    end
-
-    def create_comments(posts, _users, count, &block)
-      user_id = rand(1..100)
-      # TODO: This is creating 1000 comments at the moment, too many.
-      comments_data = posts.flat_map { |post| count.times.map { block.call(post, user_id) } }
-      Comment.insert_all(comments_data, record_timestamps: true)
-    end
-
-    # This will not update counter caches.
-    def create_likes(posts, count, &block)
-      data = posts.flat_map { |post| count.times.map { block.call(post) } }
-      Like.insert_all(data, record_timestamps: true)
-    end
-
-
-    users = create_users(100) do
-      { first_name: FFaker::Name.first_name, last_name: FFaker::Name.last_name }
-    end
-
-    posts = create_posts(users, 100) do
-      { title: FFaker::CheesyLingo.title, body: FFaker::CheesyLingo.paragraph, user_id: users.sample.id }
-    end
-
-    create_comments(posts, users, 1000) do |post, user_id|
-      { post_id: post.id, user_id:, body: FFaker::CheesyLingo.sentence, likes_count: rand(10) }
-    end
-
-    def create_comment_votes(count)
-      data = (1..count).to_a.map do
-        {
-          comment_id: rand(1..100),
-          voter_id: rand(1..100)
-        }
-      end
-      CommentVote.insert_all(data, record_timestamps: true)
-    end
-
-    create_comment_votes(100)
-    create_likes(posts, 10) do |post|
-      { post_id: post.id }
-    end
-  end
-end
-
-# Provision.new
-seed_poste_and_likes(post_count: 100, like_count: 10)
+Provision.new
+# seed_poste_and_likes(post_count: 100, like_count: 10)
 
 ##### Everything above this line should carry forward
 ##### from page to page. Below is where changes are made
@@ -231,10 +175,24 @@ def use_counter_cache(*_args)
   end
 end
 
+def custom_cache_name(*_args)
+  banner = <<~BANNER
+    Page 66, custom cache name likes_total.
+  BANNER
+  puts banner.green
+
+  posts = Post.limit(10)
+  posts.each do |post|
+    puts "Likes count: #{post.likes_total}"
+    puts "Post.likes.size: #{post.likes.size}"
+  end
+end
+
 ActiveRecord::Base.logger = Logger.new($stdout)
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
+  handler.option('custom cache name', &method(:custom_cache_name))
   handler.option('use counter cache', &method(:use_counter_cache))
   handler.option('preload object', &method(:preload_object))
 end

@@ -11,8 +11,10 @@ ActiveRecord::Schema.define do
     t.column :user_id, :bigint
     t.column :title, :string
     t.column :body, :text
-    t.integer :likes_count, default: 0, null: false
-    # t.integer :likes_total
+    # Default Rails counter cache name
+    # t.integer :likes_count, default: 0, null: false
+    # Custom counter cache name
+    t.integer :likes_total
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
   end
@@ -111,7 +113,7 @@ def seed_users_and_posts(user_count:, post_count:)
   ActiveRecord::Base.logger = Logger.new($stdout)
 end
 
-def seed_comments(count:) # rubocop:disable Metrics/MethodLength
+def seed_comments(count:)
   ActiveRecord::Base.logger = nil
 
   post_ids = Post.pluck(:id)
@@ -130,9 +132,66 @@ def seed_poste_and_likes(post_count:, like_count:)
   ActiveRecord::Base.logger = nil
   (1..post_count).each do |i|
     post = Post.create(title: "Name#{i}")
-    (1..rand(like_count)).each do |j|
+    (1..rand(like_count)).each do
       post.likes.create
     end
   end
   ActiveRecord::Base.logger = Logger.new($stdout)
+end
+
+# Create synthetic data.
+class Provision
+  def initialize
+    users = create_users(100) do
+      { first_name: FFaker::Name.first_name, last_name: FFaker::Name.last_name }
+    end
+
+    posts = create_posts(users, 100) do
+      { title: FFaker::CheesyLingo.title, body: FFaker::CheesyLingo.paragraph, user_id: users.sample.id }
+    end
+
+    create_comments(posts, users, 1000) do |post, user_id|
+      { post_id: post.id, user_id:, body: FFaker::CheesyLingo.sentence, likes_count: rand(10) }
+    end
+
+    create_comment_votes(100)
+    create_likes(posts, 10) do |post|
+      { post_id: post.id }
+    end
+  end
+
+  def create_comment_votes(count)
+    data = (1..count).to_a.map do
+      {
+        comment_id: rand(1..100),
+        voter_id: rand(1..100)
+      }
+    end
+    CommentVote.insert_all(data, record_timestamps: true)
+  end
+
+  # This will not update counter caches.
+  def create_likes(posts, count, &block)
+    data = posts.flat_map { |post| count.times.map { block.call(post) } }
+    Like.insert_all(data, record_timestamps: true)
+  end
+
+  def create_posts(_users, count, &)
+    posts_data = count.times.map(&)
+    post_ids = Post.insert_all(posts_data, record_timestamps: true).map { |data| data['id'] }
+    Post.where(id: post_ids)
+  end
+
+  def create_users(count, &)
+    users_data = count.times.map(&)
+    user_ids = User.insert_all(users_data, record_timestamps: true).map { |data| data['id'] }
+    User.where(id: user_ids)
+  end
+
+  def create_comments(posts, _users, count, &block)
+    user_id = rand(1..100)
+    # TODO: This is creating 1000 comments at the moment, too many.
+    comments_data = posts.flat_map { |post| count.times.map { block.call(post, user_id) } }
+    Comment.insert_all(comments_data, record_timestamps: true)
+  end
 end
