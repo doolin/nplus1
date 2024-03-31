@@ -11,15 +11,15 @@ ActiveRecord::Schema.define do
     table.column :user_id, :bigint
     table.column :title, :string
     table.column :body, :text
-    # table.column :likes_count, :integer
+    table.column :likes_count, :integer
     table.datetime 'created_at', null: false
     table.datetime 'updated_at', null: false
   end
 
-  create_table :likes do |table|
-    table.column :post_id, :bigint
-    table.datetime 'created_at', null: false
-    table.datetime 'updated_at', null: false
+  create_table :likes do |t|
+    t.references :post
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
   end
 
   create_table :users do |table|
