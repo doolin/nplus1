@@ -129,8 +129,35 @@ class LikesCounts
   end
 end
 
-Provision.new
-# seed_poste_and_likes(post_count: 100, like_count: 10)
+# P. 72 Account and Entry models.
+class Account < ApplicationRecord
+  has_many :entries
+
+  def create_entry(amount:)
+    entry = entries.create(amount:)
+    # Copilot suggested this.
+    # update!(balance: balance + amount)
+    update_balance_with(entry)
+  end
+
+  def update_balance_with(entry)
+    update!(balance: balance + entry.amount)
+  end
+end
+
+# P. 72 Entry for race condition demonstration.
+class Entry < ApplicationRecord
+  belongs_to :account, touch: true
+end
+
+def seed_accounts_and_entries(account_count: 10, entry_count: 10)
+  account_count.times do
+    account = Account.create
+    entry_count.times do
+      Entry.create(account:)
+    end
+  end
+end
 
 ##### Everything above this line should carry forward
 ##### from page to page. Below is where changes are made
@@ -162,9 +189,23 @@ def preload_object(*_args)
   end
 end
 
+seed_accounts_and_entries(account_count: 10, entry_count: 10)
+
 ActiveRecord::Base.logger = Logger.new($stdout)
+
+def account_balance(*_args)
+  banner = <<~BANNER
+    Page 73, account balance without threading.
+  BANNER
+  puts banner.green
+
+  account = Account.first
+  4.times { account.create_entry(amount: 100) }
+  puts "Account balance: #{account.reload.balance}"
+end
 
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
+  handler.option('account balance', &method(:account_balance))
   handler.option('preload object', &method(:preload_object))
 end

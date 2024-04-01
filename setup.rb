@@ -47,6 +47,19 @@ ActiveRecord::Schema.define do
     table.datetime 'created_at', null: false
     table.datetime 'updated_at', null: false
   end
+
+  create_table :accounts do |t|
+    t.column :balance, :decimal, default: 0.0
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+  end
+
+  create_table :entries do |t|
+    t.column :account_id, :integer
+    t.column :amount, :decimal
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+  end
 end
 
 # Make rubocop happy
