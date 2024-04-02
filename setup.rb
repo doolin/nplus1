@@ -2,6 +2,8 @@
 
 # Database Setup
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
+# ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: './n+1.db')
+
 # ActiveRecord::Base.logger = Logger.new(STDOUT)
 # ActiveRecord::Base.logger.level = Logger::INFO  # Or another level, like Logger::WARN
 

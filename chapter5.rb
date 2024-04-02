@@ -204,8 +204,37 @@ def account_balance(*_args)
   puts "Account balance: #{account.reload.balance}"
 end
 
+def threaded_account_balance(*_args) # rubocop:disable Metrics/MethodLength
+  banner = <<~BANNER
+    Page 73, account balance with threading.
+  BANNER
+  puts banner.green
+
+  explanation = <<~ERROR
+    In-memory SQLite3 does not play well with threading. This is a
+    demonstration. In a real application, you would use a
+    database that supports threading.
+  ERROR
+
+  # Does this change the result?
+  account = Account.first
+  account.create_entry(amount: 0)
+
+  threads = 4.times.map do
+    Thread.new do
+      account.create_entry(amount: 100)
+    rescue StandardError => e
+      puts "#{e.message}\n #{explanation}".red
+    end
+  end
+
+  threads.each(&:join)
+  puts "Account balance: #{Account.first.balance}"
+end
+
 CLI::UI::Prompt.instructions_color = CLI::UI::Color::GRAY
 CLI::UI::Prompt.ask('Which scenario?') do |handler|
+  handler.option('threaded account balance', &method(:threaded_account_balance))
   handler.option('account balance', &method(:account_balance))
   handler.option('preload object', &method(:preload_object))
 end
