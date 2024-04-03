@@ -1,11 +1,35 @@
 # frozen_string_literal: true
 
 # Database Setup
-ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
+
+PG_OPTIONS = {
+  host: 'localhost',
+  dbname: 'postgres',
+  adapter: 'postgresql',
+  user: 'postgres',
+  # password: 'foobar',
+  port: '5432'
+}.freeze
+ActiveRecord::Base.establish_connection(PG_OPTIONS)
+
+# SQLite3
+# ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 # ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: './n+1.db')
 
 # ActiveRecord::Base.logger = Logger.new(STDOUT)
 # ActiveRecord::Base.logger.level = Logger::INFO  # Or another level, like Logger::WARN
+
+def manage_table(name)
+  conn = ActiveRecord::Base.connection
+  conn.drop_table(name) if conn.table_exists?(name)
+end
+manage_table(:posts)
+manage_table(:likes)
+manage_table(:users)
+manage_table(:comments)
+manage_table(:comment_votes)
+manage_table(:accounts)
+manage_table(:entries)
 
 # Define Schema
 ActiveRecord::Schema.define do

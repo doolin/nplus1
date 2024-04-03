@@ -12,6 +12,7 @@ gemfile(true) do
   source 'https://rubygems.org'
 
   gem 'rails'
+  gem 'pg'
   gem 'sqlite3'
   gem 'colorize'
   gem 'dotenv' # https://github.com/bkeepers/dotenv
@@ -213,7 +214,9 @@ def threaded_account_balance(*_args) # rubocop:disable Metrics/MethodLength
   explanation = <<~ERROR
     In-memory SQLite3 does not play well with threading. This is a
     demonstration. In a real application, you would use a
-    database that supports threading.
+    database that supports threading. For example, PostgreSQL
+    this example works as expected, that is, the balance is not
+    updated correctly.
   ERROR
 
   # Does this change the result?
