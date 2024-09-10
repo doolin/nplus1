@@ -1,7 +1,17 @@
 # Serna's Fix N + 1
 
+BH Serna's "Fix n+1 queries on Rails" is a short, reasonably
+in-depth look at the n+1 problem commonly arising through
+indiscriminate use of ORMs such as Active Record. The nice
+thing about Serna's treatment is that it's well-suited for
+example implementation, as shown in this repo.
 
-## Links
+
+## Links for n+1
+
+It's a well-understood problem, which all engineers using Rails
+(or Active Record) engineering should be well acquainted with.
+These are some excellent resources:
 
 * https://evilmartians.com/chronicles/squash-n-plus-one-queries-early-with-n-plus-one-control-test-matchers-for-ruby-and-rails
 * https://github.com/nepalez/rspec-sqlimit
