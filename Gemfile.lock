@@ -121,7 +121,7 @@ GEM
       net-imap
       net-pop
       net-smtp
-    marcel (1.0.4)
+    marcel (1.2.1)
     method_source (1.1.0)
     mini_mime (1.1.5)
     mini_portile2 (2.8.9)
@@ -152,7 +152,7 @@ GEM
     prosopite (2.5.0)
       activerecord (>= 6.1)
       railties (>= 6.1)
-    puma (6.6.0)
+    puma (8.0.2)
       nio4r (~> 2.0)
     query_count (1.1.1)
       activerecord (>= 4.2)
